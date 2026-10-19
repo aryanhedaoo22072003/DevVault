@@ -1,6 +1,6 @@
 import mongoose, { type Document, type Model, Schema } from 'mongoose';
 
-export type OrderPaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type OrderPaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
 export type OrderFulfillmentStatus = 'pending' | 'processing' | 'fulfilled' | 'canceled';
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded';
 
@@ -27,9 +27,8 @@ export interface OrderDocument extends Document {
   paymentStatus: OrderPaymentStatus;
   fulfillmentStatus: OrderFulfillmentStatus;
   receipt?: string;
-  razorpayOrderId?: string;
-  razorpayPaymentId?: string;
-  razorpaySignature?: string;
+  stripeCheckoutSessionId?: string;
+  stripePaymentIntentId?: string;
   webhookEventIds: string[];
   paidAt?: Date;
   failedAt?: Date;
@@ -68,7 +67,7 @@ const orderSchema = new Schema<OrderDocument>(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
+      enum: ['pending', 'paid', 'failed', 'expired', 'refunded'],
       default: 'pending',
       index: true,
     },
@@ -79,9 +78,8 @@ const orderSchema = new Schema<OrderDocument>(
       index: true,
     },
     receipt: { type: String, default: '', trim: true },
-    razorpayOrderId: { type: String, default: '', trim: true, index: true, unique: true, sparse: true },
-    razorpayPaymentId: { type: String, default: '', trim: true, index: true, unique: true, sparse: true },
-    razorpaySignature: { type: String, default: '', trim: true },
+    stripeCheckoutSessionId: { type: String, trim: true, index: true, unique: true, sparse: true },
+    stripePaymentIntentId: { type: String, trim: true, index: true, sparse: true },
     webhookEventIds: { type: [String], default: [] },
     paidAt: { type: Date },
     failedAt: { type: Date },

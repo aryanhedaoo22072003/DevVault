@@ -26,6 +26,7 @@ type CartContextValue = {
   addItem: (product: CartProductInput) => void;
   removeItem: (slug: string) => void;
   clearCart: () => void;
+  removeItems: (slugs: string[]) => void;
   isInCart: (slug: string) => boolean;
 };
 
@@ -93,6 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addItem,
     removeItem,
     clearCart,
+    removeItems: (slugs: string[]) => setItems((current) => current.filter((item) => !slugs.includes(item.slug))),
     isInCart: (slug: string) => items.some((item) => item.slug === slug),
   }), [items, isHydrated, isOpen]);
 

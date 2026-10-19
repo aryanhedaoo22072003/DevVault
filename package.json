@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "keywords": [
     "nextjs",
@@ -27,6 +28,7 @@
     "next": "^16.4.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "stripe": "^23.0.0",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"
   },
@@ -39,6 +41,7 @@
     "eslint-config-next": "^16.4.2",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.7"
   }
 }

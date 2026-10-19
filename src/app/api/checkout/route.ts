@@ -1,32 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import { syncUserProfile } from '@/lib/auth';
+import { buildOrderPricing, parseCheckoutSlugs } from '@/lib/checkout';
 import { connectToDatabase } from '@/lib/db';
 import { env } from '@/lib/env';
-import { createRazorpayOrderServer } from '@/lib/razorpay';
+import { getStripeClient, getStripeTestConfig } from '@/lib/stripe';
 import { OrderModel } from '@/models/order.model';
 import { ProductModel } from '@/models/product.model';
-
-function normalizeCartItem(item: unknown) {
-  if (!item || typeof item !== 'object') {
-    return null;
-  }
-
-  const record = item as Record<string, unknown>;
-  const slug = typeof record.slug === 'string' ? record.slug.trim() : '';
-  if (!slug) {
-    return null;
-  }
-
-  return {
-    slug,
-    title: typeof record.title === 'string' ? record.title.trim() : slug,
-    category: typeof record.category === 'string' ? record.category.trim() : 'General',
-    image: typeof record.image === 'string' ? record.image.trim() : '',
-    priceInr: typeof record.priceInr === 'number' ? record.priceInr : Number(record.priceInr ?? 0),
-    price: typeof record.price === 'string' || typeof record.price === 'number' ? record.price : undefined,
-  };
-}
 
 export async function POST(request: Request) {
   const session = await syncUserProfile();
@@ -41,96 +21,68 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: 'Invalid checkout payload.' }, { status: 400 });
   }
 
-  const items = Array.isArray((payload as { items?: unknown })?.items)
-    ? (payload as { items: unknown[] }).items
-        .map((item) => normalizeCartItem(item))
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-    : [];
-
-  if (!items.length) {
+  const slugs = parseCheckoutSlugs(payload);
+  if (!slugs.length) {
     return NextResponse.json({ success: false, error: 'Your cart is empty.' }, { status: 400 });
   }
+  if (slugs.length > 100) return NextResponse.json({ success: false, error: 'Cart contains too many items.' }, { status: 400 });
 
+  let orderId: string | undefined;
   try {
+    getStripeTestConfig();
     await connectToDatabase();
-
-    const productSlugs = items.map((item) => item.slug);
     const products = await ProductModel.find({
-      slug: { $in: productSlugs },
+      slug: { $in: slugs },
       isPublished: true,
       status: 'published',
     }).lean();
 
-    const productMap = new Map(products.map((product) => [String(product.slug), product]));
-
-    const normalizedItems = items.map((item) => {
-      const product = productMap.get(item.slug);
-      if (!product) {
-        throw new Error(`Product not available: ${item.slug}`);
-      }
-
-      const amount = Number(product.priceInr ?? 0);
-      if (!Number.isFinite(amount) || amount <= 0) {
-        throw new Error(`Invalid price for ${item.title}`);
-      }
-
-      return {
-        productId: String(product._id ?? item.slug),
-        slug: item.slug,
-        title: item.title,
-        category: item.category,
-        image: item.image || product.imageUrl || '',
-        unitPrice: amount,
-        quantity: 1,
-        subtotal: amount,
-      };
-    });
-
-    const totalAmount = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
-    if (totalAmount <= 0) {
-      throw new Error('Order total must be greater than zero.');
-    }
+    const pricing = buildOrderPricing(slugs, products);
 
     const order = await OrderModel.create({
       userId: session.userId,
       clerkUserId: session.userId,
       customerEmail: session.profile?.email ?? session.user.emailAddresses?.[0]?.emailAddress ?? '',
       customerName: session.user.fullName ?? session.user.firstName ?? 'Developer',
-      items: normalizedItems,
-      amount: totalAmount,
+      items: pricing.items,
+      amount: pricing.amount,
       currency: 'INR',
       status: 'pending',
       paymentStatus: 'pending',
       fulfillmentStatus: 'pending',
       receipt: `devvault_${Date.now()}_${session.userId.slice(-8)}`,
     });
+    orderId = String(order._id);
 
-    const razorpayOrder = await createRazorpayOrderServer({
-      amount: totalAmount * 100,
-      currency: 'INR',
-      receipt: String(order._id),
-      notes: {
-        orderId: String(order._id),
-        userId: session.userId,
-      },
+    const origin = env.appUrl || new URL(request.url).origin;
+    const stripeSession = await getStripeClient().checkout.sessions.create({
+      mode: 'payment',
+      customer_email: order.customerEmail || undefined,
+      client_reference_id: orderId,
+      metadata: { orderId, clerkUserId: session.userId },
+      payment_intent_data: { metadata: { orderId, clerkUserId: session.userId } },
+      line_items: pricing.items.map((item) => ({
+        quantity: item.quantity,
+        price_data: {
+          currency: 'inr',
+          unit_amount: Math.round(item.unitPrice * 100),
+          product_data: { name: item.title, metadata: { productId: item.productId, slug: item.slug } },
+        },
+      })),
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/failure?orderId=${orderId}`,
     });
 
-    order.razorpayOrderId = razorpayOrder.id;
-    order.receipt = razorpayOrder.receipt;
+    if (!stripeSession.url) throw new Error('Stripe did not return a Checkout URL.');
+    order.stripeCheckoutSessionId = stripeSession.id;
     await order.save();
-
-    return NextResponse.json({
-      success: true,
-      keyId: env.razorpayKeyId,
-      orderId: String(order._id),
-      razorpayOrderId: razorpayOrder.id,
-      amount: totalAmount * 100,
-      currency: 'INR',
-      description: 'DevVault digital purchase',
-      customerEmail: order.customerEmail,
-    });
+    return NextResponse.json({ success: true, url: stripeSession.url });
   } catch (error) {
+    if (orderId) {
+      await OrderModel.updateOne({ _id: orderId, paymentStatus: 'pending' }, { $set: { status: 'failed', paymentStatus: 'failed', failedAt: new Date() } }).catch(() => undefined);
+    }
     const message = error instanceof Error ? error.message : 'Unable to create checkout session.';
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    const unavailable = message.includes('disabled') || message.includes('credentials') || message.includes('test mode');
+    return NextResponse.json({ success: false, error: message }, { status: unavailable ? 503 : 400 });
   }
 }

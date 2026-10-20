@@ -19,7 +19,7 @@ export default async function CheckoutFailurePage({
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-red-300">Payment not confirmed</p>
         <h1 className="mt-4 text-4xl font-semibold text-white">Checkout could not be completed.</h1>
         <p className="mt-4 text-slate-300">
-          Current order status: {status}. Returning here never changes payment state; only a valid Stripe test webhook can confirm payment.
+          Current order status: {status}. Returning here never changes payment state. Local test reconciliation or a valid Stripe webhook must independently confirm payment.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link href="/cart" className="rounded-full bg-violet-600 px-5 py-3 text-sm font-medium text-white hover:bg-violet-500">

@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { connectToDatabase } from '@/lib/db';
+import { finalizePaidOrder, recordUnpaidOrderState, validateCheckoutSession } from '@/lib/order-payment';
 import { buildWebhookOrderFilter, getPaymentTransition } from '@/lib/payment-events';
-import { getStripeClient, getStripeTestConfig } from '@/lib/stripe';
+import { getStripeClient, getStripeWebhookSecret } from '@/lib/stripe';
 import { OrderModel } from '@/models/order.model';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  let config;
+  let webhookSecret;
   try {
-    config = getStripeTestConfig();
+    webhookSecret = getStripeWebhookSecret();
   } catch (error) {
     return NextResponse.json({ received: false, error: error instanceof Error ? error.message : 'Stripe is unavailable.' }, { status: 503 });
   }
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
   try {
     const rawBody = await request.text();
-    event = getStripeClient().webhooks.constructEvent(rawBody, signature, config.webhookSecret);
+    event = getStripeClient().webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch {
     return NextResponse.json({ received: false, error: 'Invalid Stripe webhook signature.' }, { status: 400 });
   }
@@ -38,24 +39,17 @@ export async function POST(request: Request) {
 
   await connectToDatabase();
   const baseFilter = buildWebhookOrderFilter(orderId, clerkUserId, checkoutSession.id, event.id);
+  const order = await OrderModel.findOne(baseFilter).exec();
+  if (!order) return NextResponse.json({ received: true });
 
-  const now = new Date();
-  const update = transition.kind === 'paid'
-    ? {
-        $set: { status: 'paid', paymentStatus: 'paid', fulfillmentStatus: 'processing', paidAt: now, ...(transition.paymentIntentId ? { stripePaymentIntentId: transition.paymentIntentId } : {}) },
-        $addToSet: { webhookEventIds: event.id },
-      }
-    : {
-        $set: {
-          status: transition.kind === 'expired' ? 'canceled' : 'failed',
-          paymentStatus: transition.kind,
-          fulfillmentStatus: transition.kind === 'expired' ? 'canceled' : 'pending',
-          failedAt: now,
-        },
-        $addToSet: { webhookEventIds: event.id },
-      };
+  let paymentIntentId: string | undefined;
+  try {
+    paymentIntentId = validateCheckoutSession(order, checkoutSession, false);
+  } catch {
+    return NextResponse.json({ received: false, error: 'Stripe Checkout Session does not match the stored order.' }, { status: 400 });
+  }
 
-  const filter = transition.kind === 'paid' ? baseFilter : { ...baseFilter, paymentStatus: { $ne: 'paid' as const } };
-  await OrderModel.updateOne(filter, update);
+  if (transition.kind === 'paid') await finalizePaidOrder(order, paymentIntentId ?? transition.paymentIntentId, event.id);
+  else await recordUnpaidOrderState(order, transition.kind === 'expired' ? 'canceled' : 'failed', event.id);
   return NextResponse.json({ received: true });
 }

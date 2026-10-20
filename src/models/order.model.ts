@@ -1,6 +1,6 @@
 import mongoose, { type Document, type Model, Schema } from 'mongoose';
 
-export type OrderPaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
+export type OrderPaymentStatus = 'pending' | 'paid' | 'failed' | 'canceled' | 'expired' | 'refunded';
 export type OrderFulfillmentStatus = 'pending' | 'processing' | 'fulfilled' | 'canceled';
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded';
 
@@ -67,7 +67,7 @@ const orderSchema = new Schema<OrderDocument>(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'expired', 'refunded'],
+      enum: ['pending', 'paid', 'failed', 'canceled', 'expired', 'refunded'],
       default: 'pending',
       index: true,
     },

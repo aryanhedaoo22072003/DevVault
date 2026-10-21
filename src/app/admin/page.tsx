@@ -1,8 +1,9 @@
 import Link from 'next/link';
 
+import { requireAdminAccess } from '@/lib/auth';
 import { hasAdminConfig } from '@/lib/env';
 
-export default function AdminPage() {
+export default async function AdminPage() {
   if (!hasAdminConfig) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -18,6 +19,8 @@ export default function AdminPage() {
       </main>
     );
   }
+
+  await requireAdminAccess();
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">

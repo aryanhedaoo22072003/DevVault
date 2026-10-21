@@ -2,46 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AddToCartButton } from '@/components/add-to-cart-button';
-import { productCatalog } from '@/data/catalog';
-
-const PAGE_SIZE = 6;
-
-function filterProducts(searchParams: Record<string, string | string[] | undefined>) {
-  const query = String(searchParams.q ?? '').trim().toLowerCase();
-  const category = String(searchParams.category ?? 'all');
-  const sort = String(searchParams.sort ?? 'featured');
-  const minPrice = Number(searchParams.minPrice ?? '0');
-  const maxPrice = Number(searchParams.maxPrice ?? '200');
-
-  let filtered = [...productCatalog].filter((product) => {
-    const matchesQuery =
-      !query ||
-      product.title.toLowerCase().includes(query) ||
-      product.description.toLowerCase().includes(query) ||
-      product.category.toLowerCase().includes(query);
-
-    const matchesCategory = category === 'all' || product.category.toLowerCase() === category.toLowerCase();
-
-    const productValue = Number(product.price.replace(/[^\d.]/g, ''));
-    const matchesPrice = productValue >= minPrice && productValue <= maxPrice;
-
-    return matchesQuery && matchesCategory && matchesPrice;
-  });
-
-  if (sort === 'price-low') {
-    filtered = filtered.sort((a, b) => Number(a.price.replace(/[^\d.]/g, '')) - Number(b.price.replace(/[^\d.]/g, '')));
-  }
-
-  if (sort === 'price-high') {
-    filtered = filtered.sort((a, b) => Number(b.price.replace(/[^\d.]/g, '')) - Number(a.price.replace(/[^\d.]/g, '')));
-  }
-
-  if (sort === 'title') {
-    filtered = filtered.sort((a, b) => a.title.localeCompare(b.title));
-  }
-
-  return filtered;
-}
+import { getMarketplaceProducts } from '@/lib/marketplace';
 
 export default async function MarketplacePage({
   searchParams,
@@ -49,12 +10,7 @@ export default async function MarketplacePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedParams = await searchParams;
-  const products = filterProducts(resolvedParams);
-  const page = Number(resolvedParams.page ?? '1');
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const visibleProducts = products.slice(start, start + PAGE_SIZE);
+  const { items: visibleProducts, totalItems, totalPages, currentPage, error } = await getMarketplaceProducts(resolvedParams);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -65,7 +21,7 @@ export default async function MarketplacePage({
             <h1 className="text-4xl font-semibold text-white">Discover premium developer products.</h1>
           </div>
           <div className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 text-sm text-slate-300">
-            {products.length} product{products.length === 1 ? '' : 's'}
+            {totalItems} product{totalItems === 1 ? '' : 's'}
           </div>
         </div>
 
@@ -154,7 +110,8 @@ export default async function MarketplacePage({
           ))}
         </div>
 
-        {products.length === 0 ? (
+        {error ? <p className="mt-6 text-sm text-amber-300">The product catalog is temporarily unavailable.</p> : null}
+        {totalItems === 0 ? (
           <div className="mt-10 rounded-[1.5rem] border border-dashed border-white/10 bg-slate-900/60 p-10 text-center text-slate-400">
             No products match the current filters.
           </div>

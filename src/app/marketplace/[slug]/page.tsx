@@ -2,11 +2,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AddToCartButton } from '@/components/add-to-cart-button';
-import { productCatalog } from '@/data/catalog';
+import { getMarketplaceProductBySlug } from '@/lib/marketplace';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = productCatalog.find((item) => item.slug === slug);
+  const product = await getMarketplaceProductBySlug(slug);
 
   if (!product) {
     return (

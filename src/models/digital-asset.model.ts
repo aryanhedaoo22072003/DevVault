@@ -1,16 +1,21 @@
 import mongoose, { type Document, type Model, Schema } from 'mongoose';
 
-export type DigitalAssetType = 'screenshot' | 'video' | 'zip' | 'notebook' | 'guide' | 'repo';
+export type DigitalAssetType = 'screenshot' | 'video' | 'pdf' | 'zip' | 'notebook' | 'guide' | 'repo' | 'other';
 
 export interface DigitalAssetDocument extends Document {
   product: mongoose.Types.ObjectId;
   title: string;
   assetType: DigitalAssetType;
-  url: string;
+  url?: string;
+  storageProvider: 'local-private';
+  storageKey?: string;
+  originalFilename?: string;
+  mimeType?: string;
   thumbnailUrl?: string;
   fileSize: number;
   version?: string;
   isPublic: boolean;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,17 +26,24 @@ const digitalAssetSchema = new Schema<DigitalAssetDocument>(
     title: { type: String, required: true, trim: true },
     assetType: {
       type: String,
-      enum: ['screenshot', 'video', 'zip', 'notebook', 'guide', 'repo'],
+      enum: ['screenshot', 'video', 'pdf', 'zip', 'notebook', 'guide', 'repo', 'other'],
       default: 'guide',
     },
-    url: { type: String, required: true, trim: true },
+    url: { type: String, default: '', trim: true },
+    storageProvider: { type: String, enum: ['local-private'], default: 'local-private' },
+    storageKey: { type: String, default: '', trim: true },
+    originalFilename: { type: String, default: '', trim: true },
+    mimeType: { type: String, default: '', trim: true },
     thumbnailUrl: { type: String, default: '' },
     fileSize: { type: Number, default: 0, min: 0 },
     version: { type: String, default: '1.0.0' },
-    isPublic: { type: Boolean, default: true },
+    isPublic: { type: Boolean, default: false, index: true },
+    isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true },
 );
+
+digitalAssetSchema.index({ product: 1, isPublic: 1, isActive: 1 });
 
 export const DigitalAssetModel: Model<DigitalAssetDocument> =
   mongoose.models.DigitalAsset || mongoose.model<DigitalAssetDocument>('DigitalAsset', digitalAssetSchema);

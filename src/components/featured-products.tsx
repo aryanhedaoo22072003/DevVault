@@ -3,11 +3,11 @@ import Link from 'next/link';
 import { ArrowRight, BadgeCheck } from 'lucide-react';
 
 import { AddToCartButton } from '@/components/add-to-cart-button';
-import { featuredProducts } from '@/data/catalog';
+import type { ProductListItem } from '@/lib/marketplace';
 
 import { Button } from './ui/button';
 
-export function FeaturedProducts() {
+export function FeaturedProducts({ products }: { products: ProductListItem[] }) {
   return (
     <section className="section-shell pb-20">
       <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -25,7 +25,7 @@ export function FeaturedProducts() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {featuredProducts.map((product) => (
+        {products.map((product) => (
           <article
             key={product.id}
             className="group rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-4 shadow-glow transition hover:-translate-y-1 hover:border-violet-400/40"

@@ -49,7 +49,7 @@ export async function syncUserProfile() {
       isOnboarded: true,
       lastLoginAt: new Date(),
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
   ).lean();
 
   return {

@@ -163,8 +163,12 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
     };
   } catch (error) {
     return {
-      ...applyStaticFilters(productCatalog, rawParams),
-      source: 'seed' as const,
+      items: [],
+      totalItems: 0,
+      totalPages: 1,
+      currentPage: 1,
+      pageSize: PAGE_SIZE,
+      source: 'mongodb' as const,
       error: error instanceof Error ? error.message : 'Unable to load marketplace products.',
     };
   }
@@ -188,7 +192,7 @@ export async function getMarketplaceProductBySlug(slug: string) {
 
     return normalizeProductDocument(product);
   } catch {
-    return productCatalog.find((product) => product.slug === slug) ?? null;
+    return null;
   }
 }
 

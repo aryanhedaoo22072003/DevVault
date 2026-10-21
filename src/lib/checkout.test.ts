@@ -16,4 +16,16 @@ describe('checkout pricing', () => {
     expect(() => buildOrderPricing(['missing'], [])).toThrow('Product not available');
     expect(() => buildOrderPricing(['free'], [{ slug: 'free', title: 'Bad', priceInr: 0 }])).toThrow('Invalid price');
   });
+
+  it('prices the original Full-Stack Starter Kit failure from its MongoDB record', () => {
+    const result = buildOrderPricing(['full-stack-starter-kit'], [{
+      _id: 'mongo-product-id',
+      slug: 'full-stack-starter-kit',
+      title: 'Full-Stack Starter Kit',
+      category: 'Product Engineering',
+      priceInr: 6557,
+    }]);
+    expect(result.amount).toBe(6557);
+    expect(result.items[0]).toMatchObject({ productId: 'mongo-product-id', slug: 'full-stack-starter-kit', unitPrice: 6557 });
+  });
 });

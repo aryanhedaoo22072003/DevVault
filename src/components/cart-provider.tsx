@@ -10,6 +10,7 @@ import {
   getCartSubtotal,
   getCartTotal,
   removeItemFromCart,
+  removeItemsFromCart,
   type CartItem,
   type CartProductInput,
 } from '@/lib/cart-store';
@@ -94,7 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addItem,
     removeItem,
     clearCart,
-    removeItems: (slugs: string[]) => setItems((current) => current.filter((item) => !slugs.includes(item.slug))),
+    removeItems: (slugs: string[]) => setItems((current) => removeItemsFromCart(current, slugs)),
     isInCart: (slug: string) => items.some((item) => item.slug === slug),
   }), [items, isHydrated, isOpen]);
 

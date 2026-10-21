@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 
 import { connectToDatabase } from '@/lib/db';
 import { getStripeClient } from '@/lib/stripe';
+import { provisionOrderEntitlements } from '@/lib/entitlements';
 import { OrderModel, type OrderDocument, type OrderPaymentStatus } from '@/models/order.model';
 
 type OrderLike = Omit<Pick<OrderDocument, '_id' | 'userId' | 'clerkUserId' | 'amount' | 'currency' | 'stripeCheckoutSessionId' | 'stripePaymentIntentId' | 'paymentStatus'>, '_id'> & {
@@ -72,6 +73,7 @@ export async function finalizePaidOrder(order: OrderLike, paymentIntentId: strin
       { $addToSet: { webhookEventIds: webhookEventId } },
     );
   }
+  await provisionOrderEntitlements(String(order._id));
   return result;
 }
 

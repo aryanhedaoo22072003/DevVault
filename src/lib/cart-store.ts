@@ -95,6 +95,11 @@ export function removeItemFromCart(items: CartItem[], slug: string) {
   return items.filter((item) => item.slug !== slug);
 }
 
+export function removeItemsFromCart(items: CartItem[], slugs: string[]) {
+  const purchasedSlugs = new Set(slugs);
+  return items.filter((item) => !purchasedSlugs.has(item.slug));
+}
+
 export function getCartSubtotal(items: CartItem[]) {
   return items.reduce((sum, item) => sum + item.priceInr, 0);
 }

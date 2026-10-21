@@ -1,8 +1,12 @@
 import Link from 'next/link';
 
-import { productCatalog } from '@/data/catalog';
+import { requireAdminAccess } from '@/lib/auth';
+import { getAdminProducts } from '@/lib/marketplace';
+import { uploadProductAssetAction } from './actions';
 
-export default function AdminProductsPage() {
+export default async function AdminProductsPage() {
+  await requireAdminAccess();
+  const products = await getAdminProducts();
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="section-shell py-12 md:py-16">
@@ -38,7 +42,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {productCatalog.map((product) => (
+              {products.map((product) => (
                 <tr key={product.id} className="border-b border-white/10 last:border-0">
                   <td className="px-5 py-4">
                     <div className="font-medium text-white">{product.title}</div>
@@ -48,10 +52,17 @@ export default function AdminProductsPage() {
                   <td className="px-5 py-4">{product.format}</td>
                   <td className="px-5 py-4">{product.price}</td>
                   <td className="px-5 py-4">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white">Edit</button>
                       <button className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200">Delete</button>
                     </div>
+                    <form action={uploadProductAssetAction} className="mt-3 flex flex-col gap-2 rounded-xl border border-white/10 p-3">
+                      <input type="hidden" name="productId" value={product.id} />
+                      <label className="text-xs text-slate-400" htmlFor={`asset-title-${product.id}`}>Private delivery asset</label>
+                      <input id={`asset-title-${product.id}`} name="title" required maxLength={120} placeholder="Asset title" className="rounded-lg border border-white/10 bg-slate-950 px-2 py-1.5 text-xs" />
+                      <input name="file" type="file" required accept=".pdf,.zip,.txt,.md,.json" className="max-w-52 text-xs text-slate-300 file:mr-2 file:rounded-full file:border-0 file:bg-violet-600 file:px-2 file:py-1 file:text-white" />
+                      <button type="submit" className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white">Upload privately</button>
+                    </form>
                   </td>
                 </tr>
               ))}

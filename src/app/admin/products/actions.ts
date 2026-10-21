@@ -6,7 +6,10 @@ import { requireAdminAccess } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import { CategoryModel } from '@/models/category.model';
 import { ProductModel } from '@/models/product.model';
+import { DigitalAssetModel } from '@/models/digital-asset.model';
 import { productFormSchema, categoryFormSchema } from '@/lib/validators';
+import { privateStorage } from '@/lib/private-storage';
+import { provisionPaidOrdersForProduct } from '@/lib/entitlements';
 
 function slugify(value: string) {
   return value
@@ -156,4 +159,33 @@ export async function saveCategoryAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/categories');
   return { success: true };
+}
+
+export async function uploadProductAssetAction(formData: FormData) {
+  await requireAdminAccess();
+  const productId = String(formData.get('productId') ?? '');
+  const title = String(formData.get('title') ?? '').trim();
+  const file = formData.get('file');
+  if (!productId || !title || !(file instanceof File)) throw new Error('Product, title, and private asset file are required.');
+
+  await connectToDatabase();
+  const product = await ProductModel.findById(productId).select('_id').lean();
+  if (!product) throw new Error('Product not found.');
+  const stored = await privateStorage.put(file, productId);
+  const assetType = stored.mimeType === 'application/pdf' ? 'pdf' : stored.mimeType.includes('zip') ? 'zip' : 'other';
+  await DigitalAssetModel.create({
+    product: product._id,
+    title,
+    assetType,
+    storageProvider: 'local-private',
+    storageKey: stored.key,
+    originalFilename: stored.filename,
+    mimeType: stored.mimeType,
+    fileSize: stored.size,
+    isPublic: false,
+    isActive: true,
+  });
+  await provisionPaidOrdersForProduct(productId);
+  revalidatePath('/admin/products');
+  revalidatePath('/dashboard/purchases');
 }

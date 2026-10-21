@@ -26,7 +26,15 @@ Subscribe it to `checkout.session.completed`, `checkout.session.async_payment_su
 
 Checkout prices and product details are always loaded from MongoDB. A success-page visit alone cannot mark an order paid or grant ownership.
 
-Subscriptions and digital downloads are intentionally not enabled.
+Subscriptions remain intentionally disabled.
+
+## Private digital delivery
+
+Paid-order line items are the ownership source of truth. Idempotent entitlement records connect a Clerk user, paid order, product snapshot, and active private assets. Products without assets remain `awaiting_assets`, and an order becomes fulfilled only after every purchased product has an available entitlement.
+
+Development uploads use the `local-private` adapter rooted at `PRIVATE_STORAGE_ROOT` (default `.devvault-private`). This directory is git-ignored, rejected if configured under `public/`, and is not served by Next.js. The admin product page accepts bounded PDF, ZIP, text, Markdown, and JSON uploads. Production deployments must replace this local filesystem adapter with durable private object storage and a distributed rate limiter.
+
+Every `/api/downloads/:assetId` request authenticates with Clerk, rechecks a paid order and matching entitlement in MongoDB, verifies the asset is active and private, applies response hardening and a best-effort local rate limit, and records download activity without storage paths or credentials.
 
 ## Verification
 

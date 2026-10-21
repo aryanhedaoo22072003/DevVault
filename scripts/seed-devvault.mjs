@@ -252,11 +252,11 @@ async function main() {
   }, { timestamps: true }));
 
   for (const category of categories) {
-    await Category.findOneAndUpdate({ slug: category.slug }, category, { upsert: true, new: true, setDefaultsOnInsert: true });
+    await Category.findOneAndUpdate({ slug: category.slug }, category, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true });
   }
 
   for (const product of products) {
-    await Product.findOneAndUpdate({ slug: product.slug }, product, { upsert: true, new: true, setDefaultsOnInsert: true });
+    await Product.findOneAndUpdate({ slug: product.slug }, product, { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true });
   }
 
   const counts = {

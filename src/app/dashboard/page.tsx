@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { requireAuthenticatedUser } from '@/lib/auth';
 
 const modules = [
   { title: 'Learning roadmap', description: 'Stay on track with guided product and coding milestones.' },
@@ -6,9 +7,11 @@ const modules = [
   { title: 'AI copilot workflows', description: 'Review prompts, build agents, and iterate faster.' },
   { title: 'Saved products', description: 'Keep your market-ready builds and learning bundles in one place.' },
   { title: 'Orders', description: 'Review your purchases, payment status, and delivery progress.', href: '/dashboard/orders' },
+  { title: 'My Purchases', description: 'Access fulfilled products and securely download private assets.', href: '/dashboard/purchases' },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireAuthenticatedUser();
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="section-shell py-12 md:py-16">
@@ -22,7 +25,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {modules.map((module) => (
             <Link
               key={module.title}

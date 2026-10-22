@@ -44,6 +44,7 @@ const digitalAssetSchema = new Schema<DigitalAssetDocument>(
 );
 
 digitalAssetSchema.index({ product: 1, isPublic: 1, isActive: 1 });
+digitalAssetSchema.index({ isActive: 1, createdAt: -1 });
 
 export const DigitalAssetModel: Model<DigitalAssetDocument> =
   mongoose.models.DigitalAsset || mongoose.model<DigitalAssetDocument>('DigitalAsset', digitalAssetSchema);

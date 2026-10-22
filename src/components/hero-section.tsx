@@ -1,24 +1,24 @@
 import Link from 'next/link';
 import { ArrowRight, Code2, Play, Sparkles } from 'lucide-react';
 
-import { demoWorkspaceItems, productHighlights, stats, trustSignals } from '@/data/catalog';
+import { demoWorkspaceItems, productHighlights, trustSignals } from '@/data/catalog';
 
 import { Button } from './ui/button';
 
 export function HeroSection() {
   return (
-    <section className="section-shell relative pb-16 pt-12 md:pb-24 md:pt-16">
+    <section className="section-shell relative overflow-hidden pb-16 pt-14 md:pb-24 md:pt-20">
       <div className="absolute inset-x-0 top-0 -z-10 h-[540px] bg-hero-glow blur-3xl" />
 
       <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1.5 text-sm text-violet-200">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-sm text-cyan-200">
             <Sparkles className="h-4 w-4" />
             Digital products • learning • coding practice • AI assistance
           </div>
 
-          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            The complete platform for developers who build and learn.
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
+            Build, learn, and ship inside one <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">living workspace.</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
@@ -47,14 +47,6 @@ export function HeroSection() {
             ))}
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-sm">
-                <div className="text-2xl font-semibold text-white">{stat.value}</div>
-                <div className="mt-1 text-sm text-slate-400">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative">

@@ -90,6 +90,8 @@ const orderSchema = new Schema<OrderDocument>(
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, fulfillmentStatus: 1, createdAt: -1 });
+orderSchema.index({ clerkUserId: 1, paymentStatus: 1, paidAt: -1 });
 
 export const OrderModel: Model<OrderDocument> =
   mongoose.models.Order || mongoose.model<OrderDocument>('Order', orderSchema);

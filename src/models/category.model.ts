@@ -30,6 +30,7 @@ const categorySchema = new Schema<CategoryDocument>(
 );
 
 categorySchema.index({ parentCategory: 1, slug: 1 }, { unique: true });
+categorySchema.index({ isPublic: 1, name: 1 });
 
 export const CategoryModel: Model<CategoryDocument> =
   mongoose.models.Category || mongoose.model<CategoryDocument>('Category', categorySchema);

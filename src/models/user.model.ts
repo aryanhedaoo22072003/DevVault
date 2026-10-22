@@ -29,6 +29,8 @@ const userProfileSchema = new Schema<UserProfileDocument>(
   { timestamps: true },
 );
 
+userProfileSchema.index({ role: 1, createdAt: -1 });
+
 export const UserProfileModel: Model<UserProfileDocument> =
   mongoose.models.UserProfile || mongoose.model<UserProfileDocument>('UserProfile', userProfileSchema);
 

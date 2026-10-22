@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:python-learning": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-python-learning.mjs"
   },
   "keywords": [
     "nextjs",

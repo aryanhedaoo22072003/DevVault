@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AddToCartButton } from '@/components/add-to-cart-button';
+import { Navbar } from '@/components/navbar';
 import { getMarketplaceProducts } from '@/lib/marketplace';
 
 export default async function MarketplacePage({
@@ -14,6 +15,7 @@ export default async function MarketplacePage({
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
+      <Navbar />
       <div className="section-shell py-12 md:py-16">
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -25,7 +27,7 @@ export default async function MarketplacePage({
           </div>
         </div>
 
-        <div className="mb-8 rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-4 shadow-glow">
+        <form className="mb-8 rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-4 shadow-glow">
           <div className="grid gap-4 md:grid-cols-5">
             <div className="md:col-span-2">
               <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-slate-400">Search</label>
@@ -39,6 +41,7 @@ export default async function MarketplacePage({
             <div>
               <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-slate-400">Category</label>
               <select
+                name="category"
                 defaultValue={String(resolvedParams.category ?? 'all')}
                 className="w-full rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2.5 text-sm text-white outline-none"
               >
@@ -54,6 +57,7 @@ export default async function MarketplacePage({
             <div>
               <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-slate-400">Sort</label>
               <select
+                name="sort"
                 defaultValue={String(resolvedParams.sort ?? 'featured')}
                 className="w-full rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2.5 text-sm text-white outline-none"
               >
@@ -70,13 +74,13 @@ export default async function MarketplacePage({
               </button>
             </div>
           </div>
-        </div>
+        </form>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {visibleProducts.map((product) => (
-            <article key={product.id} className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-4 shadow-glow">
+            <article key={product.id} className="group overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-4 shadow-glow transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30">
               <div className="overflow-hidden rounded-[1.4rem]">
-                <Image src={product.image} alt={product.title} width={900} height={560} className="h-52 w-full object-cover" />
+                <Image src={product.image} alt={product.title} width={900} height={560} className="h-52 w-full object-cover transition duration-500 group-hover:scale-105" />
               </div>
               <div className="mt-5">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{product.category}</p>

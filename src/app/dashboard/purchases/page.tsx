@@ -9,6 +9,8 @@ import { formatInr } from '@/lib/cart-store';
 import { DigitalAssetModel } from '@/models/digital-asset.model';
 import { EntitlementModel } from '@/models/entitlement.model';
 import { OrderModel } from '@/models/order.model';
+import { Navbar } from '@/components/navbar';
+import { safeAssetDownloadLabel } from '@/lib/private-storage';
 
 export default async function PurchasesPage() {
   const session = await requireAuthenticatedUser();
@@ -22,7 +24,7 @@ export default async function PurchasesPage() {
   const entitlementByItem = new Map(entitlements.map((entry) => [`${String(entry.orderId)}:${entry.productId}`, entry]));
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
+    <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-12">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center justify-between gap-3">
           <div>
@@ -55,7 +57,7 @@ export default async function PurchasesPage() {
                     <span className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-medium ${available ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : entitlement?.status === 'awaiting_assets' ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-violet-500/30 bg-violet-500/10 text-violet-200'}`}>{deliveryState}</span>
                     <div className="mt-5 flex flex-wrap gap-2">
                       {available ? itemAssets.map((asset) => asset ? (
-                        <SecureDownloadButton key={String(asset._id)} assetId={String(asset._id)} title={asset.title} />
+                        <SecureDownloadButton key={String(asset._id)} assetId={String(asset._id)} label={safeAssetDownloadLabel(asset.originalFilename, asset.mimeType)} />
                       ) : null) : <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">Assets are being prepared</span>}
                     </div>
                   </div>
@@ -65,6 +67,6 @@ export default async function PurchasesPage() {
           </div>
         )}
       </div>
-    </main>
+    </div></main>
   );
 }

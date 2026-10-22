@@ -36,6 +36,14 @@ Development uploads use the `local-private` adapter rooted at `PRIVATE_STORAGE_R
 
 Every `/api/downloads/:assetId` request authenticates with Clerk, rechecks a paid order and matching entitlement in MongoDB, verifies the asset is active and private, applies response hardening and a best-effort local rate limit, and records download activity without storage paths or credentials.
 
+## Admin dashboard
+
+All `/admin` routes are protected on the server through Clerk and the `ADMIN_EMAILS` allowlist. The dashboard reads MongoDB data directly and includes overview analytics, products, categories, orders, customers, private digital assets, text-based learning content, and safe configuration readiness.
+
+Monetary analytics include only verified paid INR orders and are always labeled **TEST MODE — NO REAL REVENUE**. Admin operations cannot manually mark an order paid. Products and categories referenced by marketplace history are protected from destructive deletion.
+
+Learning content is text-first: Markdown source, code examples, flowchart definitions, quizzes, and exercises. Source content is stored without executing code or rendering arbitrary HTML; a future student interface must use a sanitized Markdown and diagram renderer.
+
 ## Verification
 
 Run `npm test`, `npm run lint`, `npm run typecheck`, and `npx next build --webpack`.

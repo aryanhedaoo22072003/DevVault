@@ -1,63 +1,22 @@
-import Link from 'next/link';
-
-import { requireAdminAccess } from '@/lib/auth';
-import { connectToDatabase } from '@/lib/db';
+import { AdminHeader, EmptyState, Pagination, TestModeBadge } from '@/components/admin-ui';
+import { ADMIN_PAGE_SIZE, escapeRegExp, safePage } from '@/lib/admin';
 import { formatInr } from '@/lib/cart-store';
+import { connectToDatabase } from '@/lib/db';
+import { DigitalAssetModel } from '@/models/digital-asset.model';
 import { OrderModel } from '@/models/order.model';
 
-export default async function AdminOrdersPage() {
-  await requireAdminAccess();
-  await connectToDatabase();
+function maskReference(value?: string) { return value ? `${value.slice(0, 7)}…${value.slice(-6)}` : '—'; }
 
-  const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
-
-  return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-300">Admin</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">Marketplace orders</h1>
-          </div>
-          <Link href="/admin" className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 text-sm text-slate-200">
-            Back to admin
-          </Link>
-        </div>
-
-        {orders.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-white/10 bg-slate-900/60 p-10 text-center text-slate-300">
-            No orders yet.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <article key={String(order._id)} className="rounded-[1.75rem] border border-white/10 bg-slate-900/70 p-5 shadow-glow">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{String(order._id).slice(-6)} • {order.customerEmail || 'Customer'}</p>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">{formatInr(Number(order.amount ?? 0))}</h2>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">{order.paymentStatus}</span>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">{order.fulfillmentStatus}</span>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">{order.status}</span>
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {order.items?.map((item) => (
-                    <div key={`${String(order._id)}-${item.slug}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                      <p className="text-sm font-medium text-white">{item.title}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">{item.category}</p>
-                      <p className="mt-2 text-sm text-slate-300">{item.quantity} × {formatInr(item.unitPrice)}</p>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  );
+export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = await searchParams; const q = String(params.q ?? '').trim(); const payment = String(params.payment ?? 'all'); const fulfillment = String(params.fulfillment ?? 'all'); const page = safePage(params.page);
+  await connectToDatabase(); const query: Record<string, unknown> = {};
+  if (q) query.$or = [{ receipt: { $regex: escapeRegExp(q), $options: 'i' } }, { customerEmail: { $regex: escapeRegExp(q), $options: 'i' } }, { stripeCheckoutSessionId: { $regex: escapeRegExp(q), $options: 'i' } }];
+  if (payment !== 'all') query.paymentStatus = payment; if (fulfillment !== 'all') query.fulfillmentStatus = fulfillment;
+  const [orders, count] = await Promise.all([OrderModel.find(query).sort({ createdAt: -1 }).skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE).lean(), OrderModel.countDocuments(query)]);
+  const productIds = [...new Set(orders.flatMap((order) => order.items.map((item) => item.productId)))];
+  const assetCounts = await DigitalAssetModel.aggregate<{ _id: string; count: number }>([{ $match: { isActive: true, isPublic: false, storageKey: { $nin: ['', null] } } }, { $group: { _id: { $toString: '$product' }, count: { $sum: 1 } } }, { $match: { _id: { $in: productIds } } }]);
+  const assetMap = new Map(assetCounts.map((row) => [row._id, row.count])); const pages = Math.max(1, Math.ceil(count / ADMIN_PAGE_SIZE));
+  return <><AdminHeader eyebrow="Order operations" title="Marketplace Orders" description="Read-only payment and fulfillment visibility. There is intentionally no manual mark-as-paid action." />
+    <form className="mb-6 grid gap-3 md:grid-cols-[1fr_180px_180px_auto]"><input name="q" defaultValue={q} placeholder="Order reference or customer" className="admin-input" /><select name="payment" defaultValue={payment} className="admin-input"><option value="all">All payments</option>{['pending','paid','failed','canceled','expired','refunded'].map((value) => <option key={value}>{value}</option>)}</select><select name="fulfillment" defaultValue={fulfillment} className="admin-input"><option value="all">All fulfillment</option>{['pending','processing','fulfilled','canceled'].map((value) => <option key={value}>{value}</option>)}</select><button className="rounded-xl bg-violet-600 px-5 py-2 text-sm">Filter</button></form>
+    {orders.length ? <div className="space-y-4">{orders.map((order) => <article key={String(order._id)} className="rounded-3xl border border-white/10 bg-slate-900/60 p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><p className="font-mono text-xs text-violet-300">Order …{String(order._id).slice(-8)}</p><h2 className="mt-2 text-2xl font-semibold text-white">{formatInr(order.amount)}</h2><p className="mt-1 text-sm text-slate-400">{order.customerName || 'Customer'} · {order.customerEmail || 'No email stored'}</p><p className="mt-2 text-xs text-slate-500">Created {new Date(order.createdAt).toLocaleString('en-IN')}</p></div><div className="flex flex-wrap gap-2"><span className="rounded-full bg-white/5 px-3 py-1 text-xs capitalize">Payment: {order.paymentStatus}</span><span className="rounded-full bg-white/5 px-3 py-1 text-xs capitalize">Delivery: {order.fulfillmentStatus}</span>{order.paymentStatus === 'paid' ? <TestModeBadge /> : null}</div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{order.items.map((item) => <div key={item.productId} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3"><p className="font-medium text-white">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.quantity} × {formatInr(item.unitPrice)}</p><p className={`mt-2 text-xs ${assetMap.get(item.productId) ? 'text-emerald-300' : 'text-amber-200'}`}>{assetMap.get(item.productId) ? `${assetMap.get(item.productId)} active delivery asset(s)` : 'Awaiting delivery asset'}</p></div>)}</div><div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 font-mono text-xs text-slate-500"><span>Checkout: {maskReference(order.stripeCheckoutSessionId)}</span><span>Payment intent: {maskReference(order.stripePaymentIntentId)}</span></div></article>)}</div> : <EmptyState title="No matching orders" message="Adjust the payment, fulfillment, or search filters." />}<Pagination page={Math.min(page, pages)} pages={pages} path="/admin/orders" params={{ q, payment, fulfillment }} /></>;
 }

@@ -8,23 +8,24 @@ import { CheckoutButton } from '@/components/checkout-button';
 import { useCart } from '@/components/cart-provider';
 import { Button } from '@/components/ui/button';
 import { formatInr } from '@/lib/cart-store';
+import { Navbar } from '@/components/navbar';
 
 export default function CartPage() {
   const { items, subtotal, total, isHydrated, removeItem, clearCart } = useCart();
 
   if (!isHydrated) {
     return (
-      <main className="min-h-screen bg-slate-950 px-4 py-16 text-slate-100">
+      <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-16">
         <div className="mx-auto max-w-4xl rounded-[2rem] border border-white/10 bg-slate-900/70 p-8 text-center text-slate-300">
           Loading your cart…
         </div>
-      </main>
+      </div></main>
     );
   }
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-slate-950 px-4 py-16 text-slate-100">
+      <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-16">
         <div className="mx-auto max-w-3xl rounded-[2rem] border border-dashed border-white/10 bg-slate-900/60 p-10 text-center shadow-glow">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-200">
             <ShoppingBag className="h-7 w-7" />
@@ -38,12 +39,12 @@ export default function CartPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div></main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
+    <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-12">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
@@ -119,6 +120,6 @@ export default function CartPage() {
           </aside>
         </div>
       </div>
-    </main>
+    </div></main>
   );
 }

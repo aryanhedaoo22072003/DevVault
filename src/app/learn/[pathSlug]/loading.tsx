@@ -1,0 +1,1 @@
+export default function LearningPathLoading() { return <main className="min-h-screen bg-slate-950 p-6"><div className="section-shell animate-pulse"><div className="h-10 w-72 rounded-xl bg-white/10" /><div className="mt-8 grid gap-5 lg:grid-cols-[260px_1fr]"><div className="h-80 rounded-3xl bg-white/5" /><div className="h-[600px] rounded-3xl bg-white/5" /></div></div></main>; }

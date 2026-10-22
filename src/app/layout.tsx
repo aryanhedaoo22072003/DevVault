@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { CartDrawer } from '@/components/cart-drawer';
 import { CartProvider } from '@/components/cart-provider';
+import { AuroraBackground } from '@/components/aurora-background';
 import { hasClerkConfig } from '@/lib/env';
 
 import './globals.css';
@@ -18,8 +19,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const wrappedContent = hasClerkConfig ? <ClerkProvider>{children}</ClerkProvider> : children;
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="dark">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('devvault-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} />
+      </head>
       <body>
+        <AuroraBackground />
         <CartProvider>
           <CartDrawer />
           {wrappedContent}

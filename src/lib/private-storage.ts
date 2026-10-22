@@ -20,6 +20,11 @@ export function sanitizeDownloadFilename(value: string) {
   return basename.slice(0, 160);
 }
 
+export function safeAssetDownloadLabel(filename: string | null | undefined, mimeType: string | null | undefined) {
+  if (mimeType === 'application/pdf') return 'Download PDF';
+  try { return `Download ${sanitizeDownloadFilename(filename || 'file')}`; } catch { return 'Download file'; }
+}
+
 export function validateStorageKey(key: string) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]*\.[a-zA-Z0-9]+$/.test(key) || key.includes('..') || path.isAbsolute(key)) {
     throw new Error('Invalid private storage key.');

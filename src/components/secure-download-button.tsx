@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export function SecureDownloadButton({ assetId, title }: { assetId: string; title: string }) {
+export function SecureDownloadButton({ assetId, label }: { assetId: string; label: string }) {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -17,7 +17,7 @@ export function SecureDownloadButton({ assetId, title }: { assetId: string; titl
       }
       const blob = await response.blob();
       const disposition = response.headers.get('content-disposition') ?? '';
-      const filename = disposition.match(/filename="([^"]+)"/)?.[1] || title;
+      const filename = disposition.match(/filename="([^"]+)"/)?.[1] || 'devvault-download';
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -36,7 +36,7 @@ export function SecureDownloadButton({ assetId, title }: { assetId: string; titl
   return (
     <div>
       <button type="button" onClick={download} disabled={downloading} className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60">
-        {downloading ? 'Preparing…' : `Download ${title}`}
+        {downloading ? 'Preparing…' : label}
       </button>
       {error ? <p role="alert" className="mt-2 max-w-xs text-sm text-red-300">{error}</p> : null}
     </div>

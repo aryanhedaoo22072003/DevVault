@@ -61,6 +61,7 @@ const productSchema = new Schema<ProductDocument>(
 );
 
 productSchema.index({ category: 1, status: 1, isPublished: 1, featured: -1 });
+productSchema.index({ status: 1, createdAt: -1 });
 productSchema.index({ createdAt: -1 });
 productSchema.index({ title: 'text', summary: 'text', description: 'text', tags: 'text' });
 

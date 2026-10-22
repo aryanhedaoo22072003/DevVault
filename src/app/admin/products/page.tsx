@@ -1,75 +1,28 @@
 import Link from 'next/link';
+import { AdminHeader, EmptyState, Pagination } from '@/components/admin-ui';
+import { ConfirmSubmitButton } from '@/components/confirm-submit-button';
+import { ADMIN_PAGE_SIZE, escapeRegExp, safePage } from '@/lib/admin';
+import { formatInr } from '@/lib/cart-store';
+import { connectToDatabase } from '@/lib/db';
+import { CategoryModel } from '@/models/category.model';
+import { DigitalAssetModel } from '@/models/digital-asset.model';
+import { ProductModel } from '@/models/product.model';
+import { archiveProductAction, deleteProductAction, saveProductAction, toggleProductStatusAction, uploadProductAssetAction } from './actions';
 
-import { requireAdminAccess } from '@/lib/auth';
-import { getAdminProducts } from '@/lib/marketplace';
-import { uploadProductAssetAction } from './actions';
+const input = 'admin-input mt-1';
+function ProductFields({ product, categories }: { product?: Record<string, unknown>; categories: Array<{ name: string; slug: string }> }) {
+  const value = (key: string, fallback = '') => String(product?.[key] ?? fallback);
+  return <div className="grid gap-4 md:grid-cols-2"><input type="hidden" name="productId" value={value('_id')} /><label className="text-sm text-slate-300">Title<input name="title" required minLength={3} defaultValue={value('title')} className={input} /></label><label className="text-sm text-slate-300">Category<select name="category" required defaultValue={value('category')} className={input}><option value="">Select category</option>{categories.map((category) => <option key={category.slug} value={category.name}>{category.name}</option>)}</select></label><label className="text-sm text-slate-300 md:col-span-2">Summary<input name="summary" required minLength={12} defaultValue={value('summary')} className={input} /></label><label className="text-sm text-slate-300 md:col-span-2">Description<textarea name="description" required minLength={30} defaultValue={value('description')} className={`${input} min-h-28`} /></label><label className="text-sm text-slate-300">Price in INR<input name="priceInr" type="number" min="0" step="1" required defaultValue={value('priceInr', '0')} className={input} /></label><label className="text-sm text-slate-300">Format<input name="format" required defaultValue={value('format', 'PDF / ZIP')} className={input} /></label><label className="text-sm text-slate-300">Product type<select name="productType" defaultValue={value('productType', 'digital-product')} className={input}>{['digital-product','course','template','bundle','practice-lab'].map((type) => <option key={type}>{type}</option>)}</select></label><label className="text-sm text-slate-300">Badge<input name="badge" defaultValue={value('badge', 'New')} className={input} /></label><label className="text-sm text-slate-300 md:col-span-2">Cover image URL<input name="imageUrl" type="url" required defaultValue={value('imageUrl')} className={input} /></label><label className="text-sm text-slate-300">Languages<input name="languages" defaultValue={Array.isArray(product?.languages) ? product.languages.join(', ') : ''} className={input} /></label><label className="text-sm text-slate-300">Frameworks<input name="frameworks" defaultValue={Array.isArray(product?.frameworks) ? product.frameworks.join(', ') : ''} className={input} /></label><label className="text-sm text-slate-300 md:col-span-2">Tags<input name="tags" defaultValue={Array.isArray(product?.tags) ? product.tags.join(', ') : ''} className={input} /></label><div className="flex flex-wrap gap-5 md:col-span-2"><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isPublished" defaultChecked={Boolean(product?.isPublished)} /> Published</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="featured" defaultChecked={Boolean(product?.featured)} /> Featured</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="demoIncluded" defaultChecked={product ? Boolean(product.demoIncluded) : true} /> Demo included</label></div><button className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white md:w-fit">{product ? 'Save changes' : 'Create product'}</button></div>;
+}
 
-export default async function AdminProductsPage() {
-  await requireAdminAccess();
-  const products = await getAdminProducts();
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="section-shell py-12 md:py-16">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div>
-            <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-violet-300">Admin</p>
-            <h1 className="text-4xl font-semibold text-white">Product management</h1>
-          </div>
-          <Link href="/admin" className="rounded-full border border-white/10 bg-slate-900/80 px-4 py-2 text-sm text-slate-200">
-            Back to overview
-          </Link>
-        </div>
-
-        <div className="mb-8 rounded-[1.5rem] border border-white/10 bg-slate-900/70 p-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-white">Create a new product</h2>
-              <p className="mt-2 text-sm text-slate-400">This CRUD shell is ready to connect to MongoDB once the credentials are set.</p>
-            </div>
-            <button className="rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white">New product</button>
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/70">
-          <table className="min-w-full text-left text-sm text-slate-200">
-            <thead className="border-b border-white/10 bg-slate-950/70 text-xs uppercase tracking-[0.18em] text-slate-400">
-              <tr>
-                <th className="px-5 py-4">Product</th>
-                <th className="px-5 py-4">Category</th>
-                <th className="px-5 py-4">Type</th>
-                <th className="px-5 py-4">Price</th>
-                <th className="px-5 py-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-b border-white/10 last:border-0">
-                  <td className="px-5 py-4">
-                    <div className="font-medium text-white">{product.title}</div>
-                    <div className="mt-1 text-xs text-slate-400">{product.demoLabel}</div>
-                  </td>
-                  <td className="px-5 py-4">{product.category}</td>
-                  <td className="px-5 py-4">{product.format}</td>
-                  <td className="px-5 py-4">{product.price}</td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white">Edit</button>
-                      <button className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200">Delete</button>
-                    </div>
-                    <form action={uploadProductAssetAction} className="mt-3 flex flex-col gap-2 rounded-xl border border-white/10 p-3">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <label className="text-xs text-slate-400" htmlFor={`asset-title-${product.id}`}>Private delivery asset</label>
-                      <input id={`asset-title-${product.id}`} name="title" required maxLength={120} placeholder="Asset title" className="rounded-lg border border-white/10 bg-slate-950 px-2 py-1.5 text-xs" />
-                      <input name="file" type="file" required accept=".pdf,.zip,.txt,.md,.json" className="max-w-52 text-xs text-slate-300 file:mr-2 file:rounded-full file:border-0 file:bg-violet-600 file:px-2 file:py-1 file:text-white" />
-                      <button type="submit" className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white">Upload privately</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-  );
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = await searchParams; const q = String(params.q ?? '').trim(); const status = String(params.status ?? 'all'); const page = safePage(params.page); await connectToDatabase();
+  const query: Record<string, unknown> = {}; if (q) query.$or = [{ title: { $regex: escapeRegExp(q), $options: 'i' } }, { slug: { $regex: escapeRegExp(q), $options: 'i' } }]; if (status !== 'all') query.status = status;
+  const [products, count, categories] = await Promise.all([ProductModel.find(query).sort({ createdAt: -1 }).skip((page - 1) * ADMIN_PAGE_SIZE).limit(ADMIN_PAGE_SIZE).lean(), ProductModel.countDocuments(query), CategoryModel.find({}).sort({ name: 1 }).select('name slug').lean()]);
+  const ids = products.map((product) => product._id); const assetRows = await DigitalAssetModel.aggregate<{ _id: string; count: number }>([{ $match: { product: { $in: ids } } }, { $group: { _id: { $toString: '$product' }, count: { $sum: 1 } } }]); const assets = new Map(assetRows.map((row) => [row._id, row.count])); const pages = Math.max(1, Math.ceil(count / ADMIN_PAGE_SIZE));
+  const categoryOptions = categories.map((category) => ({ name: category.name, slug: category.slug }));
+  return <><AdminHeader eyebrow="Catalog operations" title="Products" description="Create, edit, preview, publish, archive, and associate secure delivery files without changing historical order snapshots." action={<Link href="/marketplace" className="rounded-full border border-white/10 px-4 py-2 text-sm">Preview marketplace</Link>} />
+    <details className="mb-6 rounded-3xl border border-violet-400/20 bg-violet-500/5 p-5"><summary className="cursor-pointer font-semibold text-violet-100">Create a new product</summary><form action={saveProductAction} className="mt-5"><ProductFields categories={categoryOptions} /></form></details>
+    <form className="mb-6 grid gap-3 sm:grid-cols-[1fr_180px_auto]"><input name="q" defaultValue={q} placeholder="Search title or slug" className="admin-input" /><select name="status" defaultValue={status} className="admin-input"><option value="all">All statuses</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select><button className="rounded-xl bg-violet-600 px-5 py-2 text-sm">Filter</button></form>
+    {products.length ? <div className="space-y-4">{products.map((product) => <article key={String(product._id)} className="rounded-3xl border border-white/10 bg-slate-900/60 p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-semibold text-white">{product.title}</h2><span className="rounded-full bg-white/5 px-2 py-1 text-xs capitalize">{product.status}</span></div><p className="mt-1 font-mono text-xs text-violet-300">/{product.slug}</p><p className="mt-3 max-w-2xl text-sm text-slate-400">{product.summary}</p><div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500"><span>{product.category}</span><span>{formatInr(product.priceInr)}</span><span>{assets.get(String(product._id)) ?? 0} assets</span></div></div><div className="flex flex-wrap gap-2"><Link href={`/marketplace/${product.slug}`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs">Preview</Link><form action={toggleProductStatusAction.bind(null, String(product._id), !product.isPublished)}><button className="rounded-full border border-white/10 px-3 py-1.5 text-xs">{product.isPublished ? 'Move to draft' : 'Publish'}</button></form>{product.status !== 'archived' ? <form action={archiveProductAction.bind(null, String(product._id))}><ConfirmSubmitButton message="Archive this product? Existing orders and entitlements remain intact." className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">Archive</ConfirmSubmitButton></form> : null}<form action={deleteProductAction.bind(null, String(product._id))}><ConfirmSubmitButton message="Delete this product? Referenced products and products with assets are protected." className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200">Delete</ConfirmSubmitButton></form></div></div><div className="mt-5 grid gap-4 xl:grid-cols-2"><details className="rounded-2xl border border-white/10 bg-slate-950/50 p-4"><summary className="cursor-pointer text-sm font-medium text-white">Edit product</summary><form action={saveProductAction} className="mt-5"><ProductFields product={product as unknown as Record<string, unknown>} categories={categoryOptions} /></form></details><div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4"><h3 className="text-sm font-medium text-white">Upload private delivery asset</h3><p className="mt-1 text-xs text-slate-500">PDF, ZIP, TXT, MD, or JSON. Existing paid orders are reprovisioned.</p><form action={uploadProductAssetAction} className="mt-4 space-y-3"><input type="hidden" name="productId" value={String(product._id)} /><input name="title" required maxLength={120} placeholder="Asset title" className="admin-input" /><input name="file" type="file" required accept=".pdf,.zip,.txt,.md,.json" className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-violet-600 file:px-3 file:py-2 file:text-white" /><button className="rounded-xl bg-violet-600 px-4 py-2 text-sm">Upload privately</button></form></div></div></article>)}</div> : <EmptyState title="No products found" message="Create a product or adjust the filters." />}<Pagination page={Math.min(page, pages)} pages={pages} path="/admin/products" params={{ q, status }} /></>;
 }

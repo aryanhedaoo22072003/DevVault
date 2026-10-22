@@ -28,6 +28,27 @@ export const categoryFormSchema = z.object({
   isPublic: z.coerce.boolean().default(true),
 });
 
+export const adminListQuerySchema = z.object({
+  q: z.string().trim().max(100).optional().default(''),
+  status: z.string().trim().max(30).optional().default('all'),
+  sort: z.enum(['newest', 'oldest', 'name']).optional().default('newest'),
+  page: z.coerce.number().int().min(1).optional().default(1),
+});
+
+export const learningLessonSchema = z.object({
+  pathId: z.string().trim().optional().default(''),
+  title: z.string().trim().min(3).max(160),
+  pathTitle: z.string().trim().min(3).max(160),
+  subject: z.string().trim().min(2).max(100),
+  description: z.string().trim().max(2_000).optional().default(''),
+  markdown: z.string().max(100_000).optional().default(''),
+  codeLanguage: z.string().trim().max(40).optional().default(''),
+  code: z.string().max(30_000).optional().default(''),
+  flowchart: z.string().max(20_000).optional().default(''),
+  exercise: z.string().max(10_000).optional().default(''),
+  status: z.enum(['draft', 'published']).default('draft'),
+});
+
 export const marketplaceQuerySchema = z.object({
   q: z.string().optional().default(''),
   category: z.string().optional().default('all'),

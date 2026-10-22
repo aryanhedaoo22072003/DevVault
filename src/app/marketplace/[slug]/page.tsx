@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AddToCartButton } from '@/components/add-to-cart-button';
+import { Navbar } from '@/components/navbar';
 import { getMarketplaceProductBySlug } from '@/lib/marketplace';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -10,16 +11,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   if (!product) {
     return (
-      <main className="section-shell py-20">
+      <main className="min-h-screen"><Navbar /><div className="section-shell py-20">
         <div className="rounded-[2rem] border border-dashed border-white/10 bg-slate-900/60 p-10 text-center text-slate-300">
           Product not found.
         </div>
-      </main>
+      </div></main>
     );
   }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
+      <Navbar />
       <div className="section-shell py-12 md:py-16">
         <Link href="/marketplace" className="mb-8 inline-flex items-center text-sm text-violet-200">
           ← Back to marketplace

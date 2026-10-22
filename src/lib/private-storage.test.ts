@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeDownloadFilename, validatePrivateUpload, validateStorageKey } from './private-storage';
+import { safeAssetDownloadLabel, sanitizeDownloadFilename, validatePrivateUpload, validateStorageKey } from './private-storage';
 
 describe('private storage validation', () => {
+  it('creates public labels without exposing private paths', () => {
+    expect(safeAssetDownloadLabel('/private/server/course.pdf', 'application/pdf')).toBe('Download PDF');
+    expect(safeAssetDownloadLabel('../../bundle.zip', 'application/zip')).toBe('Download bundle.zip');
+    expect(safeAssetDownloadLabel('', 'application/octet-stream')).toBe('Download file');
+  });
   it('accepts approved matching PDF and ZIP files', () => {
     expect(validatePrivateUpload({ name: 'guide.pdf', type: 'application/pdf', size: 1024 })).toMatchObject({ filename: 'guide.pdf', extension: '.pdf' });
     expect(validatePrivateUpload({ name: 'source.zip', type: 'application/zip', size: 2048 })).toMatchObject({ extension: '.zip' });

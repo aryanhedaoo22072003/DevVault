@@ -4,6 +4,7 @@ import { requireAuthenticatedUser } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import { formatInr } from '@/lib/cart-store';
 import { OrderModel } from '@/models/order.model';
+import { Navbar } from '@/components/navbar';
 
 export default async function DashboardOrdersPage() {
   const session = await requireAuthenticatedUser();
@@ -12,7 +13,7 @@ export default async function DashboardOrdersPage() {
   const orders = await OrderModel.find({ userId: session.userId }).sort({ createdAt: -1 }).lean();
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
+    <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-12">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between gap-3">
           <div>
@@ -58,6 +59,6 @@ export default async function DashboardOrdersPage() {
           </div>
         )}
       </div>
-    </main>
+    </div></main>
   );
 }

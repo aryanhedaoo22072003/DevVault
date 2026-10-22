@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { requireAuthenticatedUser } from '@/lib/auth';
+import { Navbar } from '@/components/navbar';
 
 const modules = [
-  { title: 'Learning roadmap', description: 'Stay on track with guided product and coding milestones.' },
+  { title: 'Learning progress', description: 'Resume lessons, review quiz scores, XP, and achievements.', href: '/dashboard/learning' },
   { title: 'Practice sessions', description: 'Daily labs, coding prompts, and structured exercises.' },
   { title: 'AI copilot workflows', description: 'Review prompts, build agents, and iterate faster.' },
   { title: 'Saved products', description: 'Keep your market-ready builds and learning bundles in one place.' },
@@ -14,6 +15,7 @@ export default async function DashboardPage() {
   await requireAuthenticatedUser();
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
+      <Navbar />
       <div className="section-shell py-12 md:py-16">
         <div className="mb-8 flex items-center justify-between gap-3">
           <div>
@@ -39,10 +41,10 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-10 rounded-[2rem] border border-white/10 bg-gradient-to-r from-violet-500/10 via-slate-900 to-cyan-500/10 p-6 md:p-8">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-300">Upcoming</p>
-          <h2 className="mt-3 text-3xl font-semibold text-white">Authentication and personal learning history are ready for Clerk setup.</h2>
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-300">Secure workspace</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white">Your purchases and order history stay connected to your account.</h2>
           <p className="mt-4 max-w-2xl text-slate-300">
-            Add your Clerk publishable and secret keys to the environment to activate signed-in customer routes and protected dashboard access.
+            DevVault verifies authenticated ownership on the server before displaying orders or delivering private files.
           </p>
         </div>
       </div>

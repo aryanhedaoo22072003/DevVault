@@ -17,16 +17,16 @@ const footerColumns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-slate-950/70">
+    <footer className="border-t border-white/10 bg-slate-950/70 backdrop-blur-xl">
       <div className="section-shell py-12">
         <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 via-indigo-500 to-cyan-400 text-sm font-bold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-sm font-bold text-white">
                 D
               </div>
               <div className="text-lg font-semibold text-white">
-                Dev<span className="text-violet-300">Vault</span>
+                Dev<span className="text-cyan-400">Vault</span>
               </div>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">

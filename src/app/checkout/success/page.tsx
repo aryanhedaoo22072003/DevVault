@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PaidCartCleanup } from '@/components/paid-cart-cleanup';
 import { requireAuthenticatedUser } from '@/lib/auth';
 import { reconcileCheckoutSession } from '@/lib/order-payment';
+import { Navbar } from '@/components/navbar';
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -19,7 +20,7 @@ export default async function CheckoutSuccessPage({
   const isFailed = result?.paymentStatus === 'failed';
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-16 text-slate-100">
+    <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar /><div className="px-4 py-16">
       <div className="mx-auto max-w-2xl rounded-[2rem] border border-emerald-500/20 bg-emerald-500/5 p-8 text-center shadow-glow">
         {isPaid ? <PaidCartCleanup slugs={result.itemSlugs} /> : null}
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-300">{isPaid ? 'Payment verified' : isPending ? 'Payment confirmation pending' : isCanceled ? 'Checkout canceled' : isFailed ? 'Payment failed' : 'Order not confirmed'}</p>
@@ -38,6 +39,6 @@ export default async function CheckoutSuccessPage({
           </Link>
         </div>
       </div>
-    </main>
+    </div></main>
   );
 }

@@ -194,7 +194,7 @@ export const productHighlights = [
 export const navItems: NavItem[] = [
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Learning', href: '/marketplace?category=Learning' },
-  { label: 'Practice', href: '/marketplace?category=Practice' },
+  { label: 'Practice', href: '/practice' },
   { label: 'Dashboard', href: '/dashboard' },
 ];
 

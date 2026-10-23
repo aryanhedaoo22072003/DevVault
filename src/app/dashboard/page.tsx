@@ -4,7 +4,7 @@ import { Navbar } from '@/components/navbar';
 
 const modules = [
   { title: 'Learning progress', description: 'Resume lessons, review quiz scores, XP, and achievements.', href: '/dashboard/learning' },
-  { title: 'Practice sessions', description: 'Daily labs, coding prompts, and structured exercises.' },
+  { title: 'Practice sessions', description: 'Open coding challenges and review your submission history.', href: '/practice' },
   { title: 'AI copilot workflows', description: 'Review prompts, build agents, and iterate faster.' },
   { title: 'Saved products', description: 'Keep your market-ready builds and learning bundles in one place.' },
   { title: 'Orders', description: 'Review your purchases, payment status, and delivery progress.', href: '/dashboard/orders' },

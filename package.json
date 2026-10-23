@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "seed:python-learning": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-python-learning.mjs"
+    "seed:python-learning": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-python-learning.mjs",
+    "seed:challenges": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-coding-challenges.mjs"
   },
   "keywords": [
     "nextjs",
@@ -21,10 +22,12 @@
   "description": "Premium developer SaaS marketplace and learning platform",
   "dependencies": {
     "@clerk/nextjs": "^7.9.17",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-slot": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.59.0",
+    "monaco-editor": "^0.57.0",
     "mongoose": "^9.11.2",
     "next": "^16.4.2",
     "react": "^19.3.1",

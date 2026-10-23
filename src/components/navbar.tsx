@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import { GraduationCap, LayoutDashboard, Library, PackageCheck, Search, ShoppingCart } from 'lucide-react';
+import { Code2, GraduationCap, LayoutDashboard, Library, PackageCheck, Search, ShoppingCart } from 'lucide-react';
 
 import { useCart } from '@/components/cart-provider';
 import { navItems } from '@/data/catalog';
@@ -79,6 +79,7 @@ export function Navbar() {
                     <UserButton.Link label="My Orders" labelIcon={<PackageCheck className="h-4 w-4" />} href="/dashboard/orders" />
                     <UserButton.Link label="My Purchases" labelIcon={<Library className="h-4 w-4" />} href="/dashboard/purchases" />
                     <UserButton.Link label="My Learning" labelIcon={<GraduationCap className="h-4 w-4" />} href="/dashboard/learning" />
+                    <UserButton.Link label="Submissions" labelIcon={<Code2 className="h-4 w-4" />} href="/dashboard/submissions" />
                   </UserButton.MenuItems>
                 </UserButton>
               </Show>

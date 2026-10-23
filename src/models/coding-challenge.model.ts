@@ -8,6 +8,7 @@ export interface CodingChallengeDocument extends Document {
   title: string; slug: string; summary: string; statement: string;
   difficulty: ChallengeDifficulty; topic: string; tags: string[];
   supportedLanguages: ChallengeLanguage[];
+  entrypoint: string;
   starterCode: Array<{ language: ChallengeLanguage; code: string }>;
   examples: Array<{ input: string; output: string; explanation: string }>;
   constraints: string[];
@@ -29,6 +30,7 @@ const codingChallengeSchema = new Schema<CodingChallengeDocument>({
   topic: { type: String, required: true, trim: true, maxlength: 100, index: true },
   tags: { type: [String], default: [] },
   supportedLanguages: { type: [String], enum: ['python', 'javascript'], default: ['python', 'javascript'], index: true },
+  entrypoint: { type: String, required: true, trim: true, maxlength: 100 },
   starterCode: { type: [languageCodeSchema], default: [] }, examples: { type: [exampleSchema], default: [] },
   constraints: { type: [String], default: [] }, sampleTestCases: { type: [testCaseSchema], default: [] },
   privateTestCases: { type: [testCaseSchema], default: [], select: false },

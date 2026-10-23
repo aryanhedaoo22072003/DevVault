@@ -195,6 +195,7 @@ export const navItems: NavItem[] = [
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Learning', href: '/marketplace?category=Learning' },
   { label: 'Practice', href: '/practice' },
+  { label: 'Tracks', href: '/practice/tracks' },
   { label: 'Dashboard', href: '/dashboard' },
 ];
 

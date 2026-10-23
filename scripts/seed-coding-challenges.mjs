@@ -6,11 +6,17 @@ const challenges = [
   { title: 'Valid Palindrome', slug: 'valid-palindrome', summary: 'Determine whether normalized alphanumeric text reads the same in both directions.', difficulty: 'easy', topic: 'Two Pointers', tags: ['strings','two-pointers'], statement: 'Given a string text, return true when its alphanumeric characters read identically from left to right and right to left after ignoring letter case and all non-alphanumeric characters. Otherwise return false.', supportedLanguages: ['python','javascript'], starterCode: [{language:'python',code:'def is_valid_palindrome(text: str) -> bool:\n    # Ignore case and non-alphanumeric characters.\n    pass'},{language:'javascript',code:'function isValidPalindrome(text) {\n  // Ignore case and non-alphanumeric characters.\n}'}], examples:[{input:'"A man, a plan, a canal: Panama"',output:'true',explanation:'Normalization produces amanaplanacanalpanama.'},{input:'"race a car"',output:'false',explanation:'The normalized text differs when reversed.'}], constraints:['0 ≤ text.length ≤ 200,000','Comparison is case-insensitive.','Only letters and digits participate in the comparison.'], sampleTestCases:[{input:'"A man, a plan, a canal: Panama"',expectedOutput:'true'},{input:'"race a car"',expectedOutput:'false'}], privateTestCases:[{input:'"0P"',expectedOutput:'false'}] },
 ];
 
+const executionBySlug = {
+  'two-sum': { entrypoint: 'two_sum', sampleTestCases: [{ input: '[[2,7,11,15],9]', expectedOutput: '[0,1]' }, { input: '[[3,2,4],6]', expectedOutput: '[1,2]' }], privateTestCases: [{ input: '[[-3,4,3,90],0]', expectedOutput: '[0,2]' }, { input: '[[3,3],6]', expectedOutput: '[0,1]' }] },
+  'reverse-string': { entrypoint: 'reverse_string', sampleTestCases: [{ input: '["hello"]', expectedOutput: '"olleh"' }, { input: '[""]', expectedOutput: '""' }], privateTestCases: [{ input: '["a b!"]', expectedOutput: '"!b a"' }, { input: '["DevVault"]', expectedOutput: '"tluaVveD"' }] },
+  'valid-palindrome': { entrypoint: 'is_valid_palindrome', sampleTestCases: [{ input: '["A man, a plan, a canal: Panama"]', expectedOutput: 'true' }, { input: '["race a car"]', expectedOutput: 'false' }], privateTestCases: [{ input: '["0P"]', expectedOutput: 'false' }, { input: '[" "]', expectedOutput: 'true' }] },
+};
+
 async function main() {
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required.');
   await mongoose.connect(process.env.MONGODB_URI, process.env.MONGODB_DB ? { dbName: process.env.MONGODB_DB } : {});
   const collection = mongoose.connection.collection('codingchallenges'); let created = 0;
-  for (const challenge of challenges) { const result = await collection.updateOne({ slug: challenge.slug }, { $setOnInsert: { ...challenge, status:'published', publishedAt:new Date(), createdAt:new Date(), updatedAt:new Date() } }, { upsert:true }); created += result.upsertedCount; }
+  for (const challenge of challenges) { const execution = executionBySlug[challenge.slug]; const result = await collection.updateOne({ slug: challenge.slug }, { $setOnInsert: { ...challenge, ...execution, status:'published', publishedAt:new Date(), createdAt:new Date(), updatedAt:new Date() } }, { upsert:true }); await collection.updateOne({ slug: challenge.slug, entrypoint: { $exists: false } }, { $set: execution }); created += result.upsertedCount; }
   console.log(`Coding challenge seed complete: ${created} created, ${challenges.length - created} already present.`);
   await mongoose.disconnect();
 }

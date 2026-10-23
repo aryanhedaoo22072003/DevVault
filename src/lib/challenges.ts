@@ -16,6 +16,7 @@ export const challengeFormSchema = z.object({
   title: z.string().trim().min(3).max(160), summary: z.string().trim().min(10).max(500),
   statement: z.string().trim().min(20).max(30_000), difficulty: z.enum(challengeDifficulties),
   topic: z.string().trim().min(2).max(100), tags: z.string().max(500),
+  entrypoint: z.string().trim().regex(/^[A-Za-z_$][A-Za-z0-9_$]{0,99}$/).optional().default(''),
   pythonStarter: z.string().max(30_000), javascriptStarter: z.string().max(30_000),
   examples: z.string().max(30_000), constraints: z.string().max(10_000), sampleTestCases: z.string().max(30_000), privateTestCases: z.string().max(100_000),
 });

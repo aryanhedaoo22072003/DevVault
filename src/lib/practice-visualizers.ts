@@ -1,0 +1,11 @@
+export const traversalValues=[4,7,1,9,3] as const;
+export function twoPointerFrame(step:number){const left=Math.min(step,traversalValues.length-1);const right=Math.max(left,traversalValues.length-1-step);return traversalValues.map((value,index)=>({value,index,role:index===left&&index===right?'both':index===left?'left':index===right?'right':'idle'}))}
+export const binaryValues=[3,8,12,17,25,31,44] as const;
+export function binarySearchFrames(target=25){let low=0,high=binaryValues.length-1;const frames:Array<{low:number;high:number;mid:number;value:number;decision:string}>=[];while(low<=high){const mid=Math.floor((low+high)/2);const value=binaryValues[mid];const decision=value===target?'found':value<target?'discard left half':'discard right half';frames.push({low,high,mid,value,decision});if(value===target)break;if(value<target)low=mid+1;else high=mid-1}return frames}
+export const customers=[{id:1,name:'Asha'},{id:2,name:'Ben'},{id:3,name:'Chen'}] as const;
+export const orders=[{id:101,customerId:1,total:1200},{id:102,customerId:1,total:800},{id:103,customerId:3,total:1500}] as const;
+export function fixedLeftJoin(){return customers.flatMap(customer=>{const matches=orders.filter(order=>order.customerId===customer.id);return matches.length?matches.map(order=>({customer:customer.name,orderId:String(order.id),total:order.total})):[{customer:customer.name,orderId:'NULL',total:0}]})}
+export function fixedAggregation(){return customers.map(customer=>({customer:customer.name,orders:orders.filter(order=>order.customerId===customer.id).length,total:orders.filter(order=>order.customerId===customer.id).reduce((sum,order)=>sum+order.total,0)}))}
+export const etlStages=['Extract source records','Validate and standardize','Transform business fields','Load analytics tables','Run quality checks'] as const;
+export type CustomerVersion={customerId:number;tier:string;validFrom:string;validTo:string|null;current:boolean};
+export function applyFixedScd2(){const before:CustomerVersion[]=[{customerId:7,tier:'Basic',validFrom:'2026-01-01',validTo:null,current:true}];const after:CustomerVersion[]=[{...before[0],validTo:'2026-06-30',current:false},{customerId:7,tier:'Pro',validFrom:'2026-07-01',validTo:null,current:true}];return{watermark:'2026-07-01T00:00:00Z',incoming:{customerId:7,tier:'Pro',updatedAt:'2026-07-01T09:15:00Z'},before,after}}

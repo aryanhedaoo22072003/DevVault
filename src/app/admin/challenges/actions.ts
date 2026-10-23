@@ -17,7 +17,7 @@ function values(formData: FormData) {
     ...(parsed.javascriptStarter.trim() ? [{ language: 'javascript' as const, code: parsed.javascriptStarter }] : []),
   ];
   if (!starterCode.length) throw new Error('Add starter code for at least one language.');
-  return { title: parsed.title, summary: parsed.summary, statement: parsed.statement, difficulty: parsed.difficulty, topic: parsed.topic,
+  return { title: parsed.title, summary: parsed.summary, statement: parsed.statement, difficulty: parsed.difficulty, topic: parsed.topic, entrypoint: parsed.entrypoint || slugifyChallenge(parsed.title).replaceAll('-', '_'),
     tags: parsed.tags.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 12),
     supportedLanguages: starterCode.map((entry) => entry.language), starterCode,
     examples: examplesSchema.parse(JSON.parse(parsed.examples || '[]')), constraints: parsed.constraints.split('\n').map((item) => item.trim()).filter(Boolean),

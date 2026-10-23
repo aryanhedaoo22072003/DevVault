@@ -44,6 +44,14 @@ Monetary analytics include only verified paid INR orders and are always labeled 
 
 Learning content is text-first: Markdown source, code examples, flowchart definitions, quizzes, and exercises. Source content is stored without executing code or rendering arbitrary HTML; a future student interface must use a sanitized Markdown and diagram renderer.
 
+## Isolated challenge execution
+
+Practice execution uses a separately deployed Judge0 service. DevVault never executes submitted code in the Next.js process. Run and Submit remain disabled until the server can reach Judge0 over HTTPS, confirm the configured Python and JavaScript language IDs, and verify that sandbox networking can be disabled.
+
+Configure `JUDGE0_ENDPOINT`, `JUDGE0_PYTHON_LANGUAGE_ID`, and `JUDGE0_JAVASCRIPT_LANGUAGE_ID` on the server. For a protected Judge0 deployment, also configure both `JUDGE0_AUTH_HEADER` and `JUDGE0_AUTH_TOKEN`. These variables must never use a `NEXT_PUBLIC_` prefix. The runner must be independently hardened and resource constrained; DevVault additionally requests network-disabled execution with CPU, wall-time, memory, file, output, code-size, and per-user request limits.
+
+`Run` evaluates only public sample cases. `Submit` reads private cases server-side, returns only an aggregate grade, records the authenticated owner's submission, and awards first-acceptance XP with an atomic condition. Seed or migrate the built-in challenges with `npm run seed:challenges` after configuring MongoDB.
+
 ## Verification
 
 Run `npm test`, `npm run lint`, `npm run typecheck`, and `npx next build --webpack`.

@@ -1,0 +1,3 @@
+import {beforeEach,describe,expect,it,vi} from 'vitest';
+const auth=vi.fn(); vi.mock('@clerk/nextjs/server',()=>({auth}));
+describe('practice track API authorization',()=>{beforeEach(()=>auth.mockReset().mockResolvedValue({userId:null}));it('rejects unauthenticated quiz attempts',async()=>{const{POST}=await import('./quiz/route');const response=await POST(new Request('http://localhost/api/practice/tracks/quiz',{method:'POST',body:'{}'}));expect(response.status).toBe(401)});it('rejects unauthenticated progress visits',async()=>{const{POST}=await import('./visit/route');const response=await POST(new Request('http://localhost/api/practice/tracks/visit',{method:'POST',body:'{}'}));expect(response.status).toBe(401)})});

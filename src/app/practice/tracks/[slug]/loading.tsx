@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="min-h-screen bg-slate-950 p-6"><div className="section-shell animate-pulse"><div className="h-12 w-96 rounded-xl bg-white/10"/><div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]"><div className="h-72 rounded-3xl bg-white/5"/><div className="h-[700px] rounded-3xl bg-white/5"/></div></div></main>}

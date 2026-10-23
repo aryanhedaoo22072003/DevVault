@@ -44,6 +44,8 @@ export interface StudentLearningProgressDocument extends Document {
     xp: number;
     earnedAt: Date;
   }>;
+  acceptedChallenges: Array<{ challengeId: mongoose.Types.ObjectId; challengeSlug: string; xp: number; acceptedAt: Date }>;
+  practiceQuizAwards: Array<{ trackId: mongoose.Types.ObjectId; trackSlug: string; quizId: string; xp: number; earnedAt: Date }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +75,8 @@ const achievementSchema = new Schema({
   title: { type: String, required: true }, description: { type: String, required: true },
   xp: { type: Number, required: true, min: 0 }, earnedAt: { type: Date, required: true },
 }, { _id: false });
+const acceptedChallengeSchema = new Schema({ challengeId: { type: Schema.Types.ObjectId, required: true }, challengeSlug: { type: String, required: true }, xp: { type: Number, required: true, min: 0 }, acceptedAt: { type: Date, required: true } }, { _id: false });
+const practiceQuizAwardSchema = new Schema({ trackId: { type: Schema.Types.ObjectId, required: true }, trackSlug: { type: String, required: true }, quizId: { type: String, required: true }, xp: { type: Number, required: true, min: 0 }, earnedAt: { type: Date, required: true } }, { _id: false });
 
 const studentLearningProgressSchema = new Schema<StudentLearningProgressDocument>({
   clerkUserId: { type: String, required: true, unique: true, index: true },
@@ -82,6 +86,8 @@ const studentLearningProgressSchema = new Schema<StudentLearningProgressDocument
   quizBestScores: { type: [quizBestSchema], default: [] },
   xp: { type: Number, default: 0, min: 0 },
   achievements: { type: [achievementSchema], default: [] },
+  acceptedChallenges: { type: [acceptedChallengeSchema], default: [] },
+  practiceQuizAwards: { type: [practiceQuizAwardSchema], default: [] },
 }, { timestamps: true });
 
 studentLearningProgressSchema.index({ clerkUserId: 1, 'completedLessons.lessonId': 1 });

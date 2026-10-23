@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed:python-learning": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-python-learning.mjs",
-    "seed:challenges": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-coding-challenges.mjs"
+    "seed:challenges": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-coding-challenges.mjs",
+    "seed:practice-tracks": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-practice-tracks.mjs"
   },
   "keywords": [
     "nextjs",

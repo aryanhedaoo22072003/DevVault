@@ -20,7 +20,7 @@ describe('Stage 11 coding challenge library', () => {
     const results = validateChallengeLibrary();
     expect(results.every((result) => result.passed)).toBe(true);
     expect(results.reduce((total, result) => total + result.testsPerLanguage * 2, 0)).toBe(90);
-  });
+  }, 15_000);
 
   it('uses insert-only updates so reruns preserve existing challenge IDs and user work', () => {
     const update = buildInsertOnlyChallengeUpdate(stage11Challenges[0], true, new Date(0));

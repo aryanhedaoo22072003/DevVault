@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { z } from 'zod';
+import { lessonOneContent } from './python-lesson-one-content.mjs';
 
 const PATH_SLUG = 'python-zero-to-advanced';
 const MODULE_SLUG = 'python-foundations';
@@ -58,8 +59,10 @@ Python source is parsed, compiled to bytecode by CPython, and executed by the Py
   ],
 };
 
+Object.assign(lesson, lessonOneContent);
+
 const quizSchema = z.object({ prompt: z.string().min(3), choices: z.array(z.string().min(1)).min(2), answerIndex: z.number().int().min(0), explanation: z.string().min(3) }).refine((item) => item.answerIndex < item.choices.length);
-const lessonSchema = z.object({ title: z.string().min(3), slug: z.literal(LESSON_SLUG), status: z.literal('published'), markdown: z.string().min(500), codeExamples: z.array(z.object({ language: z.literal('python'), code: z.string().includes('Expected output:') })).min(3), flowcharts: z.array(z.object({ title: z.string().min(3), definition: z.string().refine((value) => value.split(/\s*->\s*/).length >= 3) })).min(1), quizQuestions: z.array(quizSchema).length(5), exercises: z.array(z.object({ title: z.string().min(3), instructions: z.string().min(10), expectedOutcomes: z.array(z.string().min(3)).min(1), starterCode: z.string(), language: z.literal('python') })).length(3) });
+const lessonSchema = z.object({ title: z.string().min(3), slug: z.literal(LESSON_SLUG), status: z.literal('published'), markdown: z.string().min(500), codeExamples: z.array(z.object({ language: z.literal('python'), code: z.string().includes('Expected output:') })).min(3), flowcharts: z.array(z.object({ title: z.string().min(3), definition: z.string().refine((value) => value.split(/\s*->\s*/).length >= 3) })).min(1), quizQuestions: z.array(quizSchema).length(4), exercises: z.array(z.object({ title: z.string().min(3), instructions: z.string().min(10), expectedOutcomes: z.array(z.string().min(3)).min(1), starterCode: z.string(), language: z.literal('python') })).length(1) });
 
 async function main() {
   const mongoUri = process.env.MONGODB_URI; if (!mongoUri) throw new Error('MONGODB_URI is required.'); lessonSchema.parse(lesson);
@@ -74,7 +77,7 @@ async function main() {
   if (existing) Object.assign(existing, lessonRecord); else lessons.push(lessonRecord); chapter.lessons = lessons; lessonSchema.parse(lessonRecord);
   await collection.updateOne({ _id: path._id }, { $set: { title: 'Python Programming — Zero to Advanced', subject: 'Python Programming', description: 'A progressive, text-first Python path beginning with execution fundamentals and practical programs.', access: 'public', productId: '', modules, status: 'published', updatedAt: now } });
   const verified = await collection.findOne({ slug: PATH_SLUG }); const targetModule = verified.modules.find((entry) => entry.slug === MODULE_SLUG); const targetLessons = targetModule.lessons.filter((entry) => entry.slug === LESSON_SLUG);
-  if (verified.status !== 'published' || targetLessons.length !== 1 || targetLessons[0].quizQuestions.length !== 5 || targetLessons[0].exercises.length !== 3) throw new Error('Post-write learning content verification failed.');
+  if (verified.status !== 'published' || targetLessons.length !== 1 || targetLessons[0].quizQuestions.length !== 4 || targetLessons[0].exercises.length !== 1) throw new Error('Post-write learning content verification failed.');
   console.log(JSON.stringify({ path: verified.slug, pathStatus: verified.status, modules: verified.modules.length, targetModule: targetModule.slug, targetLessons: targetLessons.length, codeExamples: targetLessons[0].codeExamples.length, quizzes: targetLessons[0].quizQuestions.length, exercises: targetLessons[0].exercises.length }));
   await mongoose.disconnect();
 }

@@ -121,8 +121,19 @@ challengePracticeSchema.index({ clerkUserId: 1, bookmarked: 1, updatedAt: -1 });
 challengePracticeSchema.index({ clerkUserId: 1, viewedAt: -1 });
 challengePracticeSchema.index({ clerkUserId: 1, "localRuns.runAt": -1 });
 
+const cachedChallengePractice = mongoose.models.ChallengePractice as
+  Model<ChallengePracticeDocument> | undefined;
+if (
+  cachedChallengePractice &&
+  (!cachedChallengePractice.schema.path("localRuns") ||
+    !cachedChallengePractice.schema.path("practicePassed.python") ||
+    !cachedChallengePractice.schema.path("localAttemptedLanguages"))
+)
+  mongoose.deleteModel("ChallengePractice");
+
 export const ChallengePracticeModel: Model<ChallengePracticeDocument> =
-  mongoose.models.ChallengePractice ||
+  (mongoose.models.ChallengePractice as
+    Model<ChallengePracticeDocument> | undefined) ||
   mongoose.model<ChallengePracticeDocument>(
     "ChallengePractice",
     challengePracticeSchema,

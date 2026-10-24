@@ -4,15 +4,18 @@ import { VioletEclipseBackground } from "@/components/violet-eclipse-background"
 import { Navbar } from "@/components/navbar";
 import { requireAuthenticatedUser } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import { hasCurrentPracticePass, practiceProgress } from "@/lib/practice";
+import { resolveChallengePracticeStatus } from "@/lib/practice";
 import { ChallengePracticeModel } from "@/models/challenge-practice.model";
 import { ChallengeSubmissionModel } from "@/models/challenge-submission.model";
 import { CodingChallengeModel } from "@/models/coding-challenge.model";
+import { SqlChallengeModel } from "@/models/sql-challenge.model";
+import { SqlChallengePracticeModel } from "@/models/sql-challenge-practice.model";
+import { sqlStatus } from "@/lib/sql-challenges";
 
 export default async function PracticeDashboardPage() {
   const session = await requireAuthenticatedUser();
   await connectToDatabase();
-  const [challenges, states, acceptedIds] = await Promise.all([
+  const [challenges, states, acceptedIds, sqlChallenges, sqlStates] = await Promise.all([
     CodingChallengeModel.find({ status: "published" })
       .select("_id slug title difficulty topic")
       .lean(),
@@ -23,7 +26,12 @@ export default async function PracticeDashboardPage() {
       clerkUserId: session.userId,
       status: "accepted",
     }),
+    SqlChallengeModel.find({ status: "published" }).select("_id slug title").lean(),
+    SqlChallengePracticeModel.find({ clerkUserId: session.userId }).sort({ updatedAt: -1 }).lean(),
   ]);
+  const sqlById = new Map(sqlStates.map((state) => [String(state.challengeId), state]));
+  const sqlCounts = { viewed: 0, inProgress: 0, passed: 0 };
+  for (const challenge of sqlChallenges) { const status = sqlStatus(sqlById.get(String(challenge._id))); if (status === "viewed") sqlCounts.viewed++; if (status === "in-progress") sqlCounts.inProgress++; if (status === "practice-passed") sqlCounts.passed++; }
   const challengeById = new Map(
     challenges.map((item) => [String(item._id), item]),
   );
@@ -36,13 +44,10 @@ export default async function PracticeDashboardPage() {
   const statusById = new Map(
     visibleStates.map((state) => [
       String(state.challengeId),
-      practiceProgress({
-        solved: solved.has(String(state.challengeId)),
-        viewed: Boolean(state.viewedAt),
-        hasDraft: Boolean(state.draftStartedLanguages?.length),
-        attempted: Boolean(state.localAttemptedLanguages?.length),
-        practicePassed: hasCurrentPracticePass(state),
-      }),
+      resolveChallengePracticeStatus(
+        state,
+        solved.has(String(state.challengeId)),
+      ),
     ]),
   );
   const viewed = [...statusById.values()].filter(
@@ -104,6 +109,10 @@ export default async function PracticeDashboardPage() {
               <p className="mt-1 text-sm text-slate-400">{label}</p>
             </article>
           ))}
+        </section>
+        <section className="aurora-panel mt-8 rounded-3xl p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-semibold text-white">SQL interview practice</h2><p className="mt-1 text-sm text-slate-400">Unverified browser practice · zero XP</p></div><Link href="/practice/sql/challenges" className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold">Continue SQL</Link></div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-4">{[["Published",sqlChallenges.length],["Viewed",sqlCounts.viewed],["In Progress",sqlCounts.inProgress],["Practice Passed",sqlCounts.passed]].map(([label,value])=><div key={label} className="rounded-2xl border border-white/10 p-4"><p className="text-2xl font-semibold">{value}</p><p className="text-sm text-slate-400">{label}</p></div>)}</div>
         </section>
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <section className="aurora-panel rounded-3xl p-6">

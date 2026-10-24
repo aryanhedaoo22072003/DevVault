@@ -61,6 +61,30 @@ export function practiceProgress(input: {
   return "not-started";
 }
 
+export function resolveChallengePracticeStatus(
+  state:
+    | {
+        viewedAt?: unknown;
+        draftStartedLanguages?: unknown[];
+        localAttemptedLanguages?: unknown[];
+        drafts?: Partial<Record<"python" | "javascript", { code: string }>>;
+        practicePassed?: Partial<
+          Record<"python" | "javascript", { codeHash: string }>
+        >;
+      }
+    | null
+    | undefined,
+  officiallySolved: boolean,
+): PracticeProgress {
+  return practiceProgress({
+    solved: officiallySolved,
+    viewed: Boolean(state?.viewedAt),
+    hasDraft: Boolean(state?.draftStartedLanguages?.length),
+    attempted: Boolean(state?.localAttemptedLanguages?.length),
+    practicePassed: state ? hasCurrentPracticePass(state) : false,
+  });
+}
+
 export function practiceSummary(
   rows: Array<{ progress: PracticeProgress; bookmarked: boolean }>,
   total: number,

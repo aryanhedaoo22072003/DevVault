@@ -13,8 +13,7 @@ import { ChallengeBookmark } from "@/components/challenge-bookmark";
 import { Navbar } from "@/components/navbar";
 import { connectToDatabase } from "@/lib/db";
 import {
-  hasCurrentPracticePass,
-  practiceProgress,
+  resolveChallengePracticeStatus,
   practiceSummary,
   type PracticeProgress,
 } from "@/lib/practice";
@@ -73,13 +72,10 @@ export default async function PracticePage({
   const allRows = allChallenges.map((challenge) => {
     const state = stateById.get(String(challenge._id));
     return {
-      progress: practiceProgress({
-        solved: solvedIds.has(String(challenge._id)),
-        viewed: Boolean(state?.viewedAt),
-        hasDraft: Boolean(state?.draftStartedLanguages.length),
-        attempted: Boolean(state?.localAttemptedLanguages?.length),
-        practicePassed: state ? hasCurrentPracticePass(state) : false,
-      }),
+      progress: resolveChallengePracticeStatus(
+        state,
+        solvedIds.has(String(challenge._id)),
+      ),
       bookmarked: Boolean(state?.bookmarked),
     };
   });
@@ -89,13 +85,10 @@ export default async function PracticePage({
     return {
       challenge,
       state,
-      progress: practiceProgress({
-        solved: solvedIds.has(String(challenge._id)),
-        viewed: Boolean(state?.viewedAt),
-        hasDraft: Boolean(state?.draftStartedLanguages.length),
-        attempted: Boolean(state?.localAttemptedLanguages?.length),
-        practicePassed: state ? hasCurrentPracticePass(state) : false,
-      }),
+      progress: resolveChallengePracticeStatus(
+        state,
+        solvedIds.has(String(challenge._id)),
+      ),
     };
   });
   if (
@@ -151,11 +144,12 @@ export default async function PracticePage({
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/practice/sql"
+              href="/practice/sql/challenges"
               className="rounded-full border border-amber-400/30 bg-amber-400/10 px-5 py-2.5 text-sm font-semibold text-amber-100"
             >
-              SQL Playground
+              SQL Challenges
             </Link>
+            <Link href="/practice/sql" className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-slate-200">SQL Playground</Link>
             <Link
               href="/dashboard/practice"
               className="rounded-full bg-gradient-to-r from-violet-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"

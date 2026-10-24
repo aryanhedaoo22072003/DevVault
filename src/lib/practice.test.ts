@@ -4,6 +4,7 @@ import {
   meaningfulDraft,
   practiceOwnerFilter,
   practiceProgress,
+  resolveChallengePracticeStatus,
   practiceStateSchema,
   practiceSummary,
   sourceHash,
@@ -131,6 +132,50 @@ describe("practice state", () => {
       }),
     ).toBe(false);
   });
+  it("reads a newly persisted Mongoose pass through the shared page resolver", () => {
+    const code = "def reverse_string(value): return value[::-1]";
+    const persisted = new ChallengePracticeModel({
+      clerkUserId: "user_test",
+      challengeId: "507f1f77bcf86cd799439011",
+      challengeSlug: "reverse-string",
+      viewedAt: new Date(),
+      draftStartedLanguages: ["python"],
+      localAttemptedLanguages: ["python"],
+      drafts: { python: { code, updatedAt: new Date() } },
+      practicePassed: {
+        python: { codeHash: sourceHash(code), passedAt: new Date() },
+      },
+      localRuns: [
+        {
+          language: "python",
+          codeHash: sourceHash(code),
+          runAt: new Date(),
+          passedTests: 2,
+          totalTests: 2,
+          outcome: "passed",
+          verified: false,
+        },
+      ],
+    }).toObject();
+    expect(resolveChallengePracticeStatus(persisted, false)).toBe(
+      "practice-passed",
+    );
+    expect(
+      resolveChallengePracticeStatus(
+        {
+          ...persisted,
+          drafts: {
+            ...persisted.drafts,
+          python: { code: code + "\n# changed" },
+          },
+        },
+        false,
+      ),
+    ).toBe("in-progress");
+    expect(resolveChallengePracticeStatus(persisted, true)).toBe(
+      "official-solved",
+    );
+  });
   it("models idempotent bookmark state as a boolean", () => {
     expect(
       practiceStateSchema.parse({ action: "bookmark", bookmarked: true }),
@@ -159,5 +204,12 @@ describe("practice state", () => {
       ChallengePracticeModel.schema.path("drafts.javascript"),
     ).toBeTruthy();
     expect(ChallengePracticeModel.schema.path("drafts.sql")).toBeTruthy();
+    expect(ChallengePracticeModel.schema.path("localRuns")).toBeTruthy();
+    expect(
+      ChallengePracticeModel.schema.path("practicePassed.python"),
+    ).toBeTruthy();
+    expect(
+      ChallengePracticeModel.schema.path("practicePassed.javascript"),
+    ).toBeTruthy();
   });
 });

@@ -12,8 +12,13 @@ export interface CodingChallengeDocument extends Document {
   starterCode: Array<{ language: ChallengeLanguage; code: string }>;
   examples: Array<{ input: string; output: string; explanation: string }>;
   constraints: string[];
+  explanation: string;
+  timeComplexity: string;
+  spaceComplexity: string;
+  trackSlugs: string[];
   sampleTestCases: Array<{ input: string; expectedOutput: string }>;
   privateTestCases: Array<{ input: string; expectedOutput: string }>;
+  referenceSolutions: Array<{ language: ChallengeLanguage; code: string }>;
   status: ChallengeStatus; publishedAt?: Date; createdAt: Date; updatedAt: Date;
 }
 
@@ -33,7 +38,12 @@ const codingChallengeSchema = new Schema<CodingChallengeDocument>({
   entrypoint: { type: String, required: true, trim: true, maxlength: 100 },
   starterCode: { type: [languageCodeSchema], default: [] }, examples: { type: [exampleSchema], default: [] },
   constraints: { type: [String], default: [] }, sampleTestCases: { type: [testCaseSchema], default: [] },
+  explanation: { type: String, default: '', maxlength: 30_000 },
+  timeComplexity: { type: String, default: '', maxlength: 500 },
+  spaceComplexity: { type: String, default: '', maxlength: 500 },
+  trackSlugs: { type: [String], default: [] },
   privateTestCases: { type: [testCaseSchema], default: [], select: false },
+  referenceSolutions: { type: [languageCodeSchema], default: [], select: false },
   status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft', index: true },
   publishedAt: { type: Date },
 }, { timestamps: true });
@@ -41,5 +51,12 @@ const codingChallengeSchema = new Schema<CodingChallengeDocument>({
 codingChallengeSchema.index({ status: 1, difficulty: 1, topic: 1, updatedAt: -1 });
 codingChallengeSchema.index({ title: 'text', summary: 'text', topic: 'text', tags: 'text' });
 
+const cachedChallengeModel = mongoose.models.CodingChallenge as Model<CodingChallengeDocument> | undefined;
+// Next.js development hot reload can retain a model compiled from an older schema.
+// Recompile only when the additive Stage 11 fields are absent so reads do not
+// silently discard seeded metadata.
+if (cachedChallengeModel && (!cachedChallengeModel.schema.path('trackSlugs') || !cachedChallengeModel.schema.path('referenceSolutions'))) {
+  delete mongoose.models.CodingChallenge;
+}
 export const CodingChallengeModel: Model<CodingChallengeDocument> =
-  mongoose.models.CodingChallenge || mongoose.model<CodingChallengeDocument>('CodingChallenge', codingChallengeSchema);
+  (mongoose.models.CodingChallenge as Model<CodingChallengeDocument> | undefined) || mongoose.model<CodingChallengeDocument>('CodingChallenge', codingChallengeSchema);

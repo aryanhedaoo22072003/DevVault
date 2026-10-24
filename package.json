@@ -11,6 +11,9 @@
     "test": "vitest run",
     "seed:python-learning": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-python-learning.mjs",
     "seed:challenges": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-coding-challenges.mjs",
+    "validate:challenges": "node scripts/validate-challenge-library.mjs",
+    "validate:sql-challenges": "node scripts/validate-sql-challenges.mjs",
+    "seed:sql-challenges": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-sql-challenges.mjs",
     "seed:practice-tracks": "DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/seed-practice-tracks.mjs"
   },
   "keywords": [
@@ -45,6 +48,7 @@
     "eslint": "^9.36.0",
     "eslint-config-next": "^16.4.2",
     "postcss": "^8.4.49",
+    "sql.js": "^1.13.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.2",
     "vitest": "^3.2.7"

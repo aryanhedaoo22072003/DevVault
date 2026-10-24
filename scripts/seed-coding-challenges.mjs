@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import { buildInsertOnlyChallengeUpdate, stage11Challenges } from './challenge-library.mjs';
+import { validateChallengeLibrary } from './validate-challenge-library.mjs';
 
 const challenges = [
   { title: 'Two Sum', slug: 'two-sum', summary: 'Return the indices of two distinct values whose sum equals a target.', difficulty: 'easy', topic: 'Arrays', tags: ['arrays','hash-map'], statement: 'Given an array of integers nums and an integer target, return the zero-based indices of two different elements whose values add up to target. Exactly one valid pair exists. Return the lower index first.', supportedLanguages: ['python','javascript'], starterCode: [{ language:'python', code:'def two_sum(nums: list[int], target: int) -> list[int]:\n    # Return two zero-based indices.\n    pass' },{ language:'javascript', code:'function twoSum(nums, target) {\n  // Return two zero-based indices.\n}' }], examples:[{input:'nums = [2, 7, 11, 15], target = 9',output:'[0, 1]',explanation:'nums[0] + nums[1] equals 9.'},{input:'nums = [3, 2, 4], target = 6',output:'[1, 2]',explanation:'The values 2 and 4 form the required pair.'}], constraints:['2 ≤ nums.length ≤ 10,000','-1,000,000 ≤ nums[i], target ≤ 1,000,000','Exactly one valid pair exists.','The same array element cannot be used twice.'], sampleTestCases:[{input:'[2,7,11,15] | 9',expectedOutput:'[0,1]'},{input:'[3,2,4] | 6',expectedOutput:'[1,2]'}], privateTestCases:[{input:'[-3,4,3,90] | 0',expectedOutput:'[0,2]'}] },
@@ -17,7 +19,18 @@ async function main() {
   await mongoose.connect(process.env.MONGODB_URI, process.env.MONGODB_DB ? { dbName: process.env.MONGODB_DB } : {});
   const collection = mongoose.connection.collection('codingchallenges'); let created = 0;
   for (const challenge of challenges) { const execution = executionBySlug[challenge.slug]; const result = await collection.updateOne({ slug: challenge.slug }, { $setOnInsert: { ...challenge, ...execution, status:'published', publishedAt:new Date(), createdAt:new Date(), updatedAt:new Date() } }, { upsert:true }); await collection.updateOne({ slug: challenge.slug, entrypoint: { $exists: false } }, { $set: execution }); created += result.upsertedCount; }
-  console.log(`Coding challenge seed complete: ${created} created, ${challenges.length - created} already present.`);
+  const validation = validateChallengeLibrary(stage11Challenges);
+  let stage11Created = 0; let stage11Published = 0;
+  for (const challenge of stage11Challenges) {
+    const result = validation.find((item) => item.slug === challenge.slug);
+    const validated = Boolean(result?.passed); const now = new Date();
+    const write = await collection.updateOne({ slug: challenge.slug }, buildInsertOnlyChallengeUpdate(challenge, validated, now), { upsert: true });
+    stage11Created += write.upsertedCount;
+    if (validated) stage11Published++;
+    else console.error(`Validation failed for ${challenge.slug}; kept unpublished: ${result?.errors.join('; ') || 'unknown validation error'}`);
+  }
+  console.log(`Original challenge seed: ${created} created, ${challenges.length - created} already present.`);
+  console.log(`Stage 11 seed: ${stage11Created} created, ${stage11Challenges.length - stage11Created} already present; ${stage11Published}/${stage11Challenges.length} definitions validated for publication.`);
   await mongoose.disconnect();
 }
 main().catch(async(error)=>{ console.error(error instanceof Error ? error.message : 'Challenge seed failed.'); await mongoose.disconnect(); process.exit(1); });

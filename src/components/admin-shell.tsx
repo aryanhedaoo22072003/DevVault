@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { BarChart3, BookOpenText, Braces, ChevronLeft, FolderOpen, GraduationCap, LayoutGrid, Menu, Package, Settings, ShoppingBag, Users, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Braces, ChevronLeft, Database, FolderOpen, GraduationCap, LayoutGrid, Menu, Package, Settings, ShoppingBag, Users, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const links = [
@@ -16,6 +16,7 @@ const links = [
   { href: '/admin/assets', label: 'Digital Assets', icon: FolderOpen },
   { href: '/admin/learning', label: 'Learning Content', icon: BookOpenText },
   { href: '/admin/challenges', label: 'Challenges', icon: Braces },
+  { href: '/admin/sql-challenges', label: 'SQL Challenges', icon: Database },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

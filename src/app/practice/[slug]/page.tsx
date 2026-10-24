@@ -163,6 +163,16 @@ export default async function ChallengePage({
                 </ul>
               </section>
             ) : null}
+            {challenge.explanation ? (
+              <section className="mt-7">
+                <h2 className="text-xl font-semibold text-white">How to approach it</h2>
+                <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">{challenge.explanation}</div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-4"><p className="text-xs uppercase tracking-wider text-slate-500">Time complexity</p><p className="mt-1 text-sm text-violet-100">{challenge.timeComplexity || 'Depends on the chosen approach.'}</p></div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-4"><p className="text-xs uppercase tracking-wider text-slate-500">Space complexity</p><p className="mt-1 text-sm text-violet-100">{challenge.spaceComplexity || 'Depends on the chosen approach.'}</p></div>
+                </div>
+              </section>
+            ) : null}
             {challenge.sampleTestCases.length ? (
               <section className="mt-7">
                 <h2 className="text-xl font-semibold text-white">

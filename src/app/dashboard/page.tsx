@@ -19,7 +19,7 @@ import {
   canOpenLearningPath,
 } from "@/lib/learning";
 import { ACHIEVEMENTS } from "@/lib/learning-progress";
-import { hasCurrentPracticePass, practiceProgress } from "@/lib/practice";
+import { resolveChallengePracticeStatus } from "@/lib/practice";
 import { orderedSections, trackProgress } from "@/lib/practice-tracks";
 import {
   aggregateXp,
@@ -111,13 +111,10 @@ export default async function DashboardPage() {
   const codingStatuses = challengeStates
     .filter((state) => challengeById.has(String(state.challengeId)))
     .map((state) =>
-      practiceProgress({
-        solved: solvedIds.has(String(state.challengeId)),
-        viewed: Boolean(state.viewedAt),
-        hasDraft: Boolean(state.draftStartedLanguages?.length),
-        attempted: Boolean(state.localAttemptedLanguages?.length),
-        practicePassed: hasCurrentPracticePass(state),
-      }),
+      resolveChallengePracticeStatus(
+        state,
+        solvedIds.has(String(state.challengeId)),
+      ),
     );
   const codingStatusCounts = {
     viewed: codingStatuses.filter((status) => status === "viewed").length,

@@ -8,11 +8,13 @@ import { CategoryModel } from '@/models/category.model';
 import { ProductModel } from '@/models/product.model';
 import { DigitalAssetModel } from '@/models/digital-asset.model';
 import { productFormSchema, categoryFormSchema } from '@/lib/validators';
-import { privateStorage } from '@/lib/private-storage';
+import { privateStorage, validatePublicPreviewUpload } from '@/lib/private-storage';
 import { provisionPaidOrdersForProduct } from '@/lib/entitlements';
 import { productHasOrders } from '@/lib/admin';
 import { LearningPathModel } from '@/models/learning-content.model';
 import { learningLessonSchema } from '@/lib/validators';
+import { canDeactivateDeliveryAsset, publicationUpdate, type PublicationState } from '@/lib/product-management';
+import { OrderModel } from '@/models/order.model';
 
 function slugify(value: string) {
   return value
@@ -22,6 +24,8 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80) || 'product';
 }
+
+const splitList = (value: string) => value.split(/[\n,]/).map((entry) => entry.trim()).filter(Boolean);
 
 async function ensureUniqueSlug(baseSlug: string, excludeId?: string) {
   let candidate = baseSlug;
@@ -51,11 +55,14 @@ export async function saveProductAction(formData: FormData) {
     badge: formData.get('badge') ?? 'New',
     demoIncluded: formData.get('demoIncluded') === 'on',
     featured: formData.get('featured') === 'on',
-    isPublished: formData.get('isPublished') === 'on',
+    isPublished: false,
     languages: formData.get('languages'),
     frameworks: formData.get('frameworks'),
     tags: formData.get('tags'),
     screenshots: formData.get('screenshots'),
+    includedItems: formData.get('includedItems'),
+    intendedAudience: formData.get('intendedAudience'),
+    prerequisites: formData.get('prerequisites'),
   };
 
   const parsed = productFormSchema.safeParse(raw);
@@ -80,8 +87,9 @@ export async function saveProductAction(formData: FormData) {
       frameworks: values.frameworks ? values.frameworks.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
       tags: values.tags ? values.tags.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
       screenshots: values.screenshots ? values.screenshots.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
-      status: values.isPublished ? 'published' : 'draft',
-      isPublished: values.isPublished,
+      includedItems: splitList(values.includedItems),
+      intendedAudience: splitList(values.intendedAudience),
+      prerequisites: splitList(values.prerequisites),
     });
   } else {
     await ProductModel.create({
@@ -93,8 +101,11 @@ export async function saveProductAction(formData: FormData) {
       frameworks: values.frameworks ? values.frameworks.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
       tags: values.tags ? values.tags.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
       screenshots: values.screenshots ? values.screenshots.split(',').map((entry) => entry.trim()).filter(Boolean) : [],
-      status: values.isPublished ? 'published' : 'draft',
-      isPublished: values.isPublished,
+      includedItems: splitList(values.includedItems),
+      intendedAudience: splitList(values.intendedAudience),
+      prerequisites: splitList(values.prerequisites),
+      status: 'draft',
+      isPublished: false,
     });
   }
 
@@ -104,13 +115,11 @@ export async function saveProductAction(formData: FormData) {
 
 }
 
-export async function toggleProductStatusAction(productId: string, isPublished: boolean) {
+export async function setProductPublicationAction(productId: string, status: PublicationState) {
   await requireAdminAccess();
+  if (!['draft', 'published'].includes(status)) throw new Error('Invalid publication status.');
   await connectToDatabase();
-  await ProductModel.findByIdAndUpdate(productId, {
-    isPublished,
-    status: isPublished ? 'published' : 'draft',
-  });
+  await ProductModel.findByIdAndUpdate(productId, publicationUpdate(status));
 
   revalidatePath('/admin');
   revalidatePath('/admin/products');
@@ -199,12 +208,39 @@ export async function deleteCategoryAction(categoryId: string) {
 export async function toggleAssetAction(assetId: string, isActive: boolean) {
   await requireAdminAccess();
   await connectToDatabase();
+  const current = await DigitalAssetModel.findById(assetId).select('product isPublic isActive').lean();
+  if (!current) throw new Error('Asset not found.');
+  if (!isActive && !current.isPublic) {
+    const [otherAssets, hasPaidOrders] = await Promise.all([
+      DigitalAssetModel.find({ product: current.product, _id: { $ne: current._id }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('storageKey').lean(),
+      OrderModel.exists({ paymentStatus: 'paid', 'items.productId': String(current.product) }),
+    ]);
+    const otherAssetChecks = await Promise.all(otherAssets.map((asset) => privateStorage.exists(asset.storageKey!)));
+    const otherActiveDeliveryAssets = otherAssetChecks.filter(Boolean).length;
+    if (!canDeactivateDeliveryAsset({ isPublic: false, hasPaidOrders: Boolean(hasPaidOrders), otherActiveDeliveryAssets })) throw new Error('Cannot deactivate the last delivery asset for a product with paid purchases. Replace it first.');
+  }
   const asset = await DigitalAssetModel.findByIdAndUpdate(assetId, { isActive }, { returnDocument: 'after' }).select('product').lean();
   if (!asset) throw new Error('Asset not found.');
   await provisionPaidOrdersForProduct(String(asset.product));
   revalidatePath('/admin/assets');
   revalidatePath('/admin/products');
   revalidatePath('/dashboard/purchases');
+}
+
+export async function replaceProductAssetAction(assetId: string, formData: FormData) {
+  await requireAdminAccess();
+  const file = formData.get('file'); const title = String(formData.get('title') ?? '').trim();
+  if (!(file instanceof File) || !title) throw new Error('Replacement title and file are required.');
+  await connectToDatabase();
+  const previous = await DigitalAssetModel.findById(assetId).lean();
+  if (!previous) throw new Error('Asset not found.');
+  if (previous.isPublic) validatePublicPreviewUpload(file);
+  const stored = await privateStorage.put(file, String(previous.product));
+  const replacement = await DigitalAssetModel.create({ product: previous.product, title, assetType: stored.mimeType === 'application/pdf' ? 'pdf' : stored.mimeType.includes('zip') ? 'zip' : 'other', storageProvider: 'local-private', storageKey: stored.key, originalFilename: stored.filename, mimeType: stored.mimeType, fileSize: stored.size, isPublic: previous.isPublic, isActive: true, replacesAssetId: previous._id });
+  if (!previous.isPublic) await provisionPaidOrdersForProduct(String(previous.product));
+  await DigitalAssetModel.updateOne({ _id: previous._id }, { $set: { isActive: false, replacedByAssetId: replacement._id, replacedAt: new Date() } });
+  if (!previous.isPublic) await provisionPaidOrdersForProduct(String(previous.product));
+  revalidatePath('/admin/assets'); revalidatePath('/admin/products'); revalidatePath('/marketplace'); revalidatePath('/dashboard/purchases');
 }
 
 export async function saveLearningContentAction(formData: FormData) {
@@ -236,11 +272,13 @@ export async function uploadProductAssetAction(formData: FormData) {
   const productId = String(formData.get('productId') ?? '');
   const title = String(formData.get('title') ?? '').trim();
   const file = formData.get('file');
+  const isPublicPreview = formData.get('isPublicPreview') === 'on';
   if (!productId || !title || !(file instanceof File)) throw new Error('Product, title, and private asset file are required.');
 
   await connectToDatabase();
   const product = await ProductModel.findById(productId).select('_id').lean();
   if (!product) throw new Error('Product not found.');
+  if (isPublicPreview) validatePublicPreviewUpload(file);
   const stored = await privateStorage.put(file, productId);
   const assetType = stored.mimeType === 'application/pdf' ? 'pdf' : stored.mimeType.includes('zip') ? 'zip' : 'other';
   await DigitalAssetModel.create({
@@ -252,10 +290,13 @@ export async function uploadProductAssetAction(formData: FormData) {
     originalFilename: stored.filename,
     mimeType: stored.mimeType,
     fileSize: stored.size,
-    isPublic: false,
+    isPublic: isPublicPreview,
     isActive: true,
   });
   await provisionPaidOrdersForProduct(productId);
   revalidatePath('/admin/products');
+  revalidatePath('/admin/assets');
+  revalidatePath(`/marketplace/${(await ProductModel.findById(productId).select('slug').lean())?.slug ?? ''}`);
+  revalidatePath('/marketplace');
   revalidatePath('/dashboard/purchases');
 }

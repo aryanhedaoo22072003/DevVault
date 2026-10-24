@@ -1,10 +1,12 @@
 import { productCatalog } from '@/data/catalog';
 import { CategoryModel } from '@/models/category.model';
+import { DigitalAssetModel } from '@/models/digital-asset.model';
 import { ProductModel } from '@/models/product.model';
 
 import { connectToDatabase } from './db';
 import { hasMongoConfig } from './env';
 import { marketplaceQuerySchema } from './validators';
+import { privateStorage } from './private-storage';
 
 export type ProductListItem = {
   id: string;
@@ -18,17 +20,28 @@ export type ProductListItem = {
   image: string;
   badge: string;
   featured?: boolean;
+  priceInr: number;
+  priceType: 'free' | 'paid';
+  isPurchasable: boolean;
+  availabilityLabel: string;
 };
 
 type ProductDocumentLike = object;
 
 const PAGE_SIZE = 6;
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function formatPriceInr(amount: number) {
   return `₹${amount.toLocaleString('en-IN')}`;
 }
 
-function normalizeProductDocument(doc: ProductDocumentLike): ProductListItem {
+export function productAvailability(priceInr: number, activePrivateAssetCount: number) {
+  const priceType = priceInr === 0 ? 'free' as const : 'paid' as const;
+  const isPurchasable = priceInr > 0 && activePrivateAssetCount > 0;
+  return { priceType, isPurchasable, availabilityLabel: activePrivateAssetCount > 0 ? (priceInr > 0 ? 'Available now' : 'Free access not configured') : 'Not yet available' };
+}
+
+function normalizeProductDocument(doc: ProductDocumentLike, fulfillable = false): ProductListItem {
   const record = doc as Record<string, unknown>;
   const title = typeof record.title === 'string' ? record.title : 'Untitled product';
   const category = typeof record.category === 'string' ? record.category : 'General';
@@ -49,6 +62,8 @@ function normalizeProductDocument(doc: ProductDocumentLike): ProductListItem {
     image,
     badge: typeof record.badge === 'string' ? record.badge : 'New',
     featured: Boolean(record.featured),
+    priceInr: rawPrice,
+    ...productAvailability(rawPrice, fulfillable ? 1 : 0),
   };
 }
 
@@ -69,8 +84,9 @@ function applyStaticFilters(items: ProductListItem[], rawParams: Record<string, 
     const basePrice = Number(product.price.replace(/[^\d]/g, ''));
     const matchesCategory = category === 'all' || product.category.toLowerCase() === category.toLowerCase();
     const matchesPrice = basePrice >= minPrice && basePrice <= maxPrice;
+    const matchesPriceType = params.priceType === 'all' || (params.priceType === 'free' ? basePrice === 0 : basePrice > 0);
 
-    return matchesQuery && matchesCategory && matchesPrice;
+    return matchesQuery && matchesCategory && matchesPrice && matchesPriceType;
   });
 
   if (params.sort === 'price-low') {
@@ -104,7 +120,7 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
 
   if (!hasMongoConfig) {
     return {
-      ...applyStaticFilters(productCatalog, rawParams),
+      ...applyStaticFilters(productCatalog.map((product) => ({ ...product, priceInr: Number(product.price.replace(/[^\d]/g, '')), priceType: 'paid' as const, isPurchasable: false, availabilityLabel: 'Not yet available' })), rawParams),
       source: 'seed' as const,
       error: null,
     };
@@ -119,11 +135,12 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
     }
 
     if (params.q) {
+      const safeQuery = escapeRegExp(params.q);
       query.$or = [
-        { title: { $regex: params.q, $options: 'i' } },
-        { summary: { $regex: params.q, $options: 'i' } },
-        { description: { $regex: params.q, $options: 'i' } },
-        { tags: { $in: [new RegExp(params.q, 'i')] } },
+        { title: { $regex: safeQuery, $options: 'i' } },
+        { summary: { $regex: safeQuery, $options: 'i' } },
+        { description: { $regex: safeQuery, $options: 'i' } },
+        { tags: { $in: [new RegExp(safeQuery, 'i')] } },
       ];
     }
 
@@ -133,6 +150,8 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
         $lte: params.maxPrice,
       };
     }
+    if (params.priceType === 'free') query.priceInr = 0;
+    if (params.priceType === 'paid') query.priceInr = { $gt: 0, $lte: params.maxPrice, ...(params.minPrice ? { $gte: params.minPrice } : {}) };
 
     const totalItems = await ProductModel.countDocuments(query);
     const sortBy: Record<string, 1 | -1> =
@@ -142,14 +161,19 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
           ? { priceInr: -1 }
           : params.sort === 'title'
             ? { title: 1 }
-            : { featured: -1, createdAt: -1 };
+            : params.sort === 'newest'
+              ? { createdAt: -1 }
+              : { featured: -1, createdAt: -1 };
 
     const products = await ProductModel.find(query)
       .sort(sortBy)
       .skip((params.page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .lean();
-    const items = products.map((product) => normalizeProductDocument(product));
+    const deliveryAssets = await DigitalAssetModel.find({ product: { $in: products.map((product) => product._id) }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('product storageKey').lean();
+    const verifiedAssets = await Promise.all(deliveryAssets.map(async (asset) => ({ productId: String(asset.product), exists: await privateStorage.exists(asset.storageKey!) })));
+    const fulfillable = new Set(verifiedAssets.filter((asset) => asset.exists).map((asset) => asset.productId));
+    const items = products.map((product) => normalizeProductDocument(product, fulfillable.has(String(product._id))));
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 
     return {
@@ -180,7 +204,8 @@ export async function getMarketplaceProductBySlug(slug: string) {
   }
 
   if (!hasMongoConfig) {
-    return productCatalog.find((product) => product.slug === slug) ?? null;
+    const product = productCatalog.find((item) => item.slug === slug);
+    return product ? { ...product, summary: product.description, priceInr: Number(product.price.replace(/[^\d]/g, '')), priceType: 'paid' as const, isPurchasable: false, availabilityLabel: 'Not yet available', includedItems: [], intendedAudience: [], prerequisites: [], previewAssets: [], deliveryFormats: [], relatedProducts: [] } : null;
   }
 
   try {
@@ -190,10 +215,35 @@ export async function getMarketplaceProductBySlug(slug: string) {
       return null;
     }
 
-    return normalizeProductDocument(product);
+    const [assets, related] = await Promise.all([
+      DigitalAssetModel.find({ product: product._id, isActive: true, storageKey: { $nin: ['', null] } }).select('_id title assetType originalFilename mimeType fileSize isPublic storageKey').lean(),
+      ProductModel.find({ _id: { $ne: product._id }, status: 'published', isPublished: true, category: product.category }).sort({ featured: -1, createdAt: -1 }).limit(3).lean(),
+    ]);
+    const checkedAssets = await Promise.all(assets.map(async (asset) => ({ ...asset, fileExists: await privateStorage.exists(asset.storageKey!) })));
+    const privateAssets = checkedAssets.filter((asset) => !asset.isPublic && asset.fileExists);
+    const previewAssets = checkedAssets.filter((asset) => asset.isPublic && asset.fileExists).map((asset) => ({ id: String(asset._id), title: asset.title, mimeType: asset.mimeType || 'application/octet-stream', fileSize: asset.fileSize }));
+    const deliveryFormats = [...new Set(privateAssets.map((asset) => asset.mimeType || asset.assetType).filter(Boolean))];
+    return {
+      ...normalizeProductDocument(product, privateAssets.length > 0),
+      summary: product.summary,
+      includedItems: product.includedItems ?? [],
+      intendedAudience: product.intendedAudience ?? [],
+      prerequisites: product.prerequisites ?? [],
+      languages: product.languages ?? [],
+      frameworks: product.frameworks ?? [],
+      previewAssets,
+      deliveryFormats,
+      relatedProducts: related.map((item) => normalizeProductDocument(item, false)),
+    };
   } catch {
     return null;
   }
+}
+
+export async function getMarketplaceCategories() {
+  if (!hasMongoConfig) return [...new Set(productCatalog.map((product) => product.category))].sort();
+  await connectToDatabase();
+  return CategoryModel.distinct('name', { isPublic: true });
 }
 
 export async function getAdminProducts() {

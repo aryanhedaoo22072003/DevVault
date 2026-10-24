@@ -16,7 +16,7 @@ export default async function Home() {
       <TechnologyGrid />
       <FeaturedProducts products={featured.items} />
       <section className="section-shell pb-20">
-        <div className="overflow-hidden rounded-[2rem] border border-violet-500/20 bg-gradient-to-r from-violet-500/10 via-slate-900 to-cyan-500/10 p-8 shadow-glow md:p-12">
+        <div className="overflow-hidden rounded-[2rem] border border-violet-500/20 bg-gradient-to-r from-violet-500/10 via-slate-900 to-violet-500/10 p-8 shadow-glow md:p-12">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="mb-2 text-sm font-medium uppercase tracking-[0.22em] text-violet-300">

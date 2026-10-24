@@ -16,6 +16,9 @@ export interface DigitalAssetDocument extends Document {
   version?: string;
   isPublic: boolean;
   isActive: boolean;
+  replacesAssetId?: mongoose.Types.ObjectId;
+  replacedByAssetId?: mongoose.Types.ObjectId;
+  replacedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +42,9 @@ const digitalAssetSchema = new Schema<DigitalAssetDocument>(
     version: { type: String, default: '1.0.0' },
     isPublic: { type: Boolean, default: false, index: true },
     isActive: { type: Boolean, default: true, index: true },
+    replacesAssetId: { type: Schema.Types.ObjectId, ref: 'DigitalAsset' },
+    replacedByAssetId: { type: Schema.Types.ObjectId, ref: 'DigitalAsset' },
+    replacedAt: Date,
   },
   { timestamps: true },
 );

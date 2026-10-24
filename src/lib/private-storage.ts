@@ -13,6 +13,8 @@ export const APPROVED_ASSET_TYPES = new Map([
   ['text/markdown', '.md'],
   ['application/json', '.json'],
 ]);
+export const PUBLIC_PREVIEW_TYPES = new Set(['application/pdf', 'text/plain', 'text/markdown', 'application/json']);
+export const MAX_PUBLIC_PREVIEW_BYTES = 5_242_880;
 
 export function sanitizeDownloadFilename(value: string) {
   const basename = path.basename(value).replace(/[^a-zA-Z0-9._ -]/g, '_').trim();
@@ -54,6 +56,17 @@ export function validatePrivateUpload(file: Pick<File, 'name' | 'type' | 'size'>
   return { filename, extension: expectedExtension };
 }
 
+export function validatePublicPreviewUpload(file: Pick<File, 'name' | 'type' | 'size'>) {
+  const validated = validatePrivateUpload(file);
+  if (!PUBLIC_PREVIEW_TYPES.has(file.type)) throw new Error('Public previews must be PDF, TXT, Markdown, or JSON files.');
+  if (file.size > MAX_PUBLIC_PREVIEW_BYTES) throw new Error('Public previews must be 5 MB or smaller.');
+  return validated;
+}
+
+export function buildPublicPreviewFilter(assetId: string) {
+  return { _id: assetId, isPublic: true, isActive: true, storageKey: { $nin: ['', null] } };
+}
+
 export const privateStorage = {
   async put(file: File, productId: string) {
     const { filename, extension } = validatePrivateUpload(file);
@@ -72,5 +85,13 @@ export const privateStorage = {
     const metadata = await stat(target);
     if (!metadata.isFile()) throw new Error('Private asset is not a file.');
     return { stream: createReadStream(target), size: metadata.size };
+  },
+  async exists(key: string) {
+    try {
+      const metadata = await stat(resolvePrivatePath(key));
+      return metadata.isFile();
+    } catch {
+      return false;
+    }
   },
 };

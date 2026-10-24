@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { BarChart3, BookOpenText, Braces, ChevronLeft, FolderOpen, LayoutGrid, Menu, Package, Settings, ShoppingBag, Store, Users, X } from 'lucide-react';
+import { BarChart3, BookOpenText, Braces, ChevronLeft, FolderOpen, GraduationCap, LayoutGrid, Menu, Package, Settings, ShoppingBag, Users, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const links = [
@@ -27,8 +27,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <>
       <div className="flex h-20 items-center justify-between border-b border-white/10 px-4">
         <Link href="/admin" className="flex items-center gap-3" aria-label="DevVault admin home">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 font-bold text-white">D</span>
-          {!collapsed ? <span className="font-semibold text-white">DevVault <span className="text-cyan-400">Admin</span></span> : null}
+          <span className="brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold text-white">D</span>
+          {!collapsed ? <span className="font-semibold text-white">DevVault <span className="text-violet-400">Admin</span></span> : null}
         </Link>
         <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-slate-400 lg:hidden" aria-label="Close admin navigation"><X className="h-5 w-5" /></button>
       </div>
@@ -39,7 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         })}
       </nav>
       <div className="space-y-2 border-t border-white/10 p-3">
-        <Link href="/marketplace" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"><Store className="h-4 w-4 shrink-0" />{!collapsed ? 'Back to Marketplace' : null}</Link>
+        <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"><GraduationCap className="h-4 w-4 shrink-0" />{!collapsed ? 'Back to Student Dashboard' : null}</Link>
         <div className="mb-2 flex justify-center"><ThemeToggle compact={collapsed} /></div><div className="flex items-center justify-between rounded-xl bg-white/5 p-2">
           <UserButton appearance={{ elements: { avatarBox: 'h-8 w-8 ring-2 ring-violet-400/20' } }} />
           {!collapsed ? <span className="mr-2 text-xs font-medium uppercase tracking-wider text-slate-500">Admin account</span> : null}

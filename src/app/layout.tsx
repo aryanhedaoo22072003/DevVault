@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { CartDrawer } from '@/components/cart-drawer';
 import { CartProvider } from '@/components/cart-provider';
-import { AuroraBackground } from '@/components/aurora-background';
+import { VioletEclipseBackground } from '@/components/violet-eclipse-background';
 import { hasClerkConfig } from '@/lib/env';
 
 import './globals.css';
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const wrappedContent = hasClerkConfig ? <ClerkProvider>{children}</ClerkProvider> : children;
+  const wrappedContent = hasClerkConfig ? <ClerkProvider appearance={{ variables: { colorPrimary: 'var(--brand)', colorBackground: 'var(--surface)', colorForeground: 'var(--foreground)', borderRadius: '0.875rem' } }}>{children}</ClerkProvider> : children;
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark">
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('devvault-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch(e){}})()` }} />
       </head>
       <body>
-        <AuroraBackground />
+        <VioletEclipseBackground />
         <CartProvider>
           <CartDrawer />
           {wrappedContent}

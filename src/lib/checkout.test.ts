@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildOrderPricing, parseCheckoutSlugs } from './checkout';
+import { buildOrderPricing, parseCheckoutSlugs, unavailableCheckoutSlugs } from './checkout';
 
 describe('checkout pricing', () => {
   it('uses MongoDB snapshots and ignores client prices and duplicate slugs', () => {
@@ -27,5 +27,10 @@ describe('checkout pricing', () => {
     }]);
     expect(result.amount).toBe(6557);
     expect(result.items[0]).toMatchObject({ productId: 'mongo-product-id', slug: 'full-stack-starter-kit', unitPrice: 6557 });
+  });
+
+  it('blocks products without an active private fulfillment asset', () => {
+    const products = [{ _id: 'deliverable', slug: 'ready', title: 'Ready', priceInr: 100 }, { _id: 'missing', slug: 'not-ready', title: 'Not Ready', priceInr: 100 }];
+    expect(unavailableCheckoutSlugs(products, ['deliverable'])).toEqual(['not-ready']);
   });
 });

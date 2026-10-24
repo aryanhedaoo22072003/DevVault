@@ -1,0 +1,46 @@
+<!doctype html>
+<meta charset="utf-8">
+<script type="text/plain" id="worker-source">
+const MAX_OUTPUT=16384;
+let pyodidePromise=null,sqlPromise=null;
+const normalize=value=>{const text=String(value??'').trim();try{return JSON.stringify(JSON.parse(text))}catch{return text.replace(/\r\n/g,'\n')}};
+const bounded=value=>String(value??'').slice(0,MAX_OUTPUT);
+async function runJavaScript(request){const output=[];const safeConsole={log:(...values)=>output.push(values.map(value=>typeof value==='string'?value:JSON.stringify(value)).join(' ')),error:(...values)=>output.push(values.map(String).join(' '))};const camel=request.entrypoint.replace(/_([a-z])/g,(_,letter)=>letter.toUpperCase());const getEntry=new Function('console',request.code+'\n;return typeof '+camel+'==="function"?'+camel+':undefined;');const fn=getEntry(safeConsole);if(!fn)throw new Error('Expected function '+camel+' was not defined.');const tests=[];for(const test of request.tests||[]){const args=JSON.parse(test.input);if(!Array.isArray(args))throw new Error('Sample input must be a JSON argument array.');const value=await fn(...args);const actual=JSON.stringify(value);tests.push({passed:normalize(actual)===normalize(test.expectedOutput),actual})}return{stdout:output.join('\n'),tests}}
+async function loadPython(){if(!pyodidePromise)pyodidePromise=(async()=>{importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js');return loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'})})();return pyodidePromise}
+async function runPython(request){const output=[];const py=await loadPython();py.setStdout({batched:value=>output.push(value)});py.setStderr({batched:value=>output.push(value)});await py.runPythonAsync(request.code);const tests=[];for(const test of request.tests||[]){const args=JSON.parse(test.input);if(!Array.isArray(args))throw new Error('Sample input must be a JSON argument array.');py.globals.set('__dv_args_json',JSON.stringify(args));const raw=await py.runPythonAsync("import json as __dv_json\n__dv_value = "+request.entrypoint+"(*__dv_json.loads(__dv_args_json))\n__dv_json.dumps(__dv_value, separators=(',', ':'), ensure_ascii=False)");const actual=String(raw);tests.push({passed:normalize(actual)===normalize(test.expectedOutput),actual})}return{stdout:output.join('\n'),tests}}
+async function loadSql(){if(!sqlPromise)sqlPromise=(async()=>{importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js');return initSqlJs({locateFile:file=>'https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/'+file})})();return sqlPromise}
+async function runSql(request){const SQL=await loadSql();const db=new SQL.Database();for(const statement of request.dataset||[])db.run(statement);db.run('PRAGMA query_only = ON');const query=request.code.trim();if(!/^(select|with|explain)\b/i.test(query)||query.replace(/;\s*$/,'').includes(';'))throw new Error('Only one read-only SELECT, WITH, or EXPLAIN query is allowed.');const sets=db.exec(query,{maxRows:201});const first=sets[0]||{columns:[],values:[]};const result={stdout:first.values.length+' row(s)',tests:[],columns:first.columns.slice(0,50),rows:first.values.slice(0,200).map(row=>row.slice(0,50)),truncated:first.values.length>200};db.close();return result}
+self.onmessage=async event=>{const request=event.data;try{const result=request.language==='python'?await runPython(request):request.language==='javascript'?await runJavaScript(request):await runSql(request);postMessage({ok:true,stdout:bounded(result.stdout),stderr:'',tests:result.tests||[],columns:result.columns,rows:result.rows,truncated:result.truncated,workerOrigin:self.origin||self.location.origin})}catch(error){postMessage({ok:false,stdout:'',stderr:`${request.language} runtime error: ${String(error&&error.stack||error)}`.slice(0,MAX_OUTPUT),tests:[],workerOrigin:self.origin||self.location.origin})}};
+</script>
+<script>
+(() => {
+  'use strict';
+  const CHANNEL = 'devvault-browser-runner';
+  const VERSION = 1;
+  let activeWorker = null;
+  const source = document.getElementById('worker-source').textContent;
+  const send = value => parent.postMessage({ channel: CHANNEL, version: VERSION, ...value }, '*');
+  const detail = event => `Worker startup error: ${event.message || 'The browser did not provide an error message'}${event.filename ? ` (${event.filename}:${event.lineno || 0}:${event.colno || 0})` : ''}`;
+  const fail = (id, message) => send({ id, type: 'result', ok: false, stdout: '', stderr: message, tests: [] });
+  const validRequest = data => data && data.channel === CHANNEL && data.version === VERSION && data.action === 'run' && typeof data.id === 'string' && /^[a-zA-Z0-9-]+$/.test(data.id) && data.id.length <= 100 && ['python', 'javascript', 'sql'].includes(data.language) && typeof data.code === 'string' && new TextEncoder().encode(data.code).byteLength <= 30000;
+  addEventListener('securitypolicyviolation', event => { if (activeWorker) fail(activeWorker.id, `Sandbox policy blocked ${event.violatedDirective || 'a required resource'} (${event.blockedURI || 'unknown resource'}).`); });
+  addEventListener('message', event => {
+    const data = event.data;
+    if (!data || data.channel !== CHANNEL || data.version !== VERSION) return;
+    if (data.action === 'ping') { send({ type: 'ready' }); return; }
+    if (!validRequest(data)) return;
+    if (activeWorker) { fail(data.id, 'Another isolated execution is already active.'); return; }
+    const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+    let worker;
+    try { worker = new Worker(url, { name: 'devvault-execution' }); }
+    catch (error) { URL.revokeObjectURL(url); fail(data.id, `Worker bootstrap error: ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`); return; }
+    activeWorker = { worker, id: data.id };
+    const finish = result => { if (!activeWorker || activeWorker.worker !== worker) return; activeWorker = null; worker.terminate(); URL.revokeObjectURL(url); send({ id: data.id, type: 'result', ...result }); };
+    worker.onmessage = message => finish(message.data);
+    worker.onerror = error => { error.preventDefault(); finish({ ok: false, stdout: '', stderr: detail(error), tests: [] }); };
+    worker.onmessageerror = () => finish({ ok: false, stdout: '', stderr: 'The isolated worker returned an unreadable response.', tests: [] });
+    worker.postMessage(data);
+  });
+  send({ type: 'ready' });
+})();
+</script>

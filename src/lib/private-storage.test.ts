@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { safeAssetDownloadLabel, sanitizeDownloadFilename, validatePrivateUpload, validateStorageKey } from './private-storage';
+import { buildPublicPreviewFilter, safeAssetDownloadLabel, sanitizeDownloadFilename, validatePrivateUpload, validatePublicPreviewUpload, validateStorageKey } from './private-storage';
 
 describe('private storage validation', () => {
   it('creates public labels without exposing private paths', () => {
@@ -25,5 +25,11 @@ describe('private storage validation', () => {
     expect(() => validateStorageKey('/tmp/secret.pdf')).toThrow();
     expect(validateStorageKey('product-id/asset.pdf')).toBe('product-id/asset.pdf');
     expect(sanitizeDownloadFilename('../../safe guide.pdf')).toBe('safe guide.pdf');
+  });
+  it('allows only bounded public preview formats and requires explicit public visibility', () => {
+    expect(validatePublicPreviewUpload({ name: 'sample.pdf', type: 'application/pdf', size: 1000 })).toMatchObject({ extension: '.pdf' });
+    expect(() => validatePublicPreviewUpload({ name: 'sample.zip', type: 'application/zip', size: 1000 })).toThrow();
+    expect(() => validatePublicPreviewUpload({ name: 'large.pdf', type: 'application/pdf', size: 6_000_000 })).toThrow();
+    expect(buildPublicPreviewFilter('asset')).toEqual({ _id: 'asset', isPublic: true, isActive: true, storageKey: { $nin: ['', null] } });
   });
 });

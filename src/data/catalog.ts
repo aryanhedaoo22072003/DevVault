@@ -52,7 +52,7 @@ export const technologyCategories: TechnologyCategory[] = [
     title: 'Python & AI',
     description: 'Prompt workflows, copilots, evaluation pipelines, and AI-powered learning systems.',
     count: '42 packs',
-    accent: 'from-cyan-500/20 via-sky-500/10 to-transparent',
+    accent: 'from-violet-500/20 via-violet-500/10 to-transparent',
     icon: BrainCircuit,
   },
   {
@@ -73,7 +73,7 @@ export const technologyCategories: TechnologyCategory[] = [
     title: 'Cloud & DevOps',
     description: 'Infrastructure blueprints, observability patterns, and deployment guardrails.',
     count: '24 blueprints',
-    accent: 'from-blue-500/20 via-cyan-500/10 to-transparent',
+    accent: 'from-violet-500/20 via-violet-500/10 to-transparent',
     icon: ShieldCheck,
   },
   {

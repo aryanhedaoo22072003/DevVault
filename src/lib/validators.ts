@@ -18,6 +18,9 @@ export const productFormSchema = z.object({
   frameworks: z.string().trim().optional().default(''),
   tags: z.string().trim().optional().default(''),
   screenshots: z.string().trim().optional().default(''),
+  includedItems: z.string().trim().max(4_000).optional().default(''),
+  intendedAudience: z.string().trim().max(4_000).optional().default(''),
+  prerequisites: z.string().trim().max(4_000).optional().default(''),
 });
 
 export const categoryFormSchema = z.object({
@@ -52,7 +55,8 @@ export const learningLessonSchema = z.object({
 export const marketplaceQuerySchema = z.object({
   q: z.string().optional().default(''),
   category: z.string().optional().default('all'),
-  sort: z.enum(['featured', 'price-low', 'price-high', 'title']).optional().default('featured'),
+  sort: z.enum(['featured', 'newest', 'price-low', 'price-high', 'title']).optional().default('featured'),
+  priceType: z.enum(['all', 'free', 'paid']).optional().default('all'),
   page: z.coerce.number().int().min(1).optional().default(1),
   minPrice: z.coerce.number().int().min(0).optional().default(0),
   maxPrice: z.coerce.number().int().min(0).optional().default(500000),

@@ -12,13 +12,13 @@ export function HeroSection() {
 
       <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-sm text-cyan-200">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-sm luxury-accent">
             <Sparkles className="h-4 w-4" />
             Digital products • learning • coding practice • AI assistance
           </div>
 
           <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
-            Build, learn, and ship inside one <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">living workspace.</span>
+            Build, learn, and ship inside one <span className="bg-gradient-to-r from-violet-300 via-violet-300 to-amber-200 bg-clip-text text-transparent">exceptional workspace.</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
@@ -50,7 +50,7 @@ export function HeroSection() {
         </div>
 
         <div className="relative">
-          <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-violet-500/20 via-transparent to-cyan-500/20 blur-2xl" />
+          <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-violet-500/20 via-transparent to-violet-500/20 blur-2xl" />
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/80 p-5 shadow-glow">
             <div className="mb-5 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 p-3">
               <div className="flex items-center gap-2">

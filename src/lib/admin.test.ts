@@ -1,18 +1,47 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { isAdminEmail } from '@/lib/auth';
+import { accountCapabilities, isOwnerClerkUserId, isValidOwnerClerkUserId } from '@/lib/auth';
 import { escapeRegExp, fillSalesTrend, paidRevenuePipeline, safePage, topProductsPipeline } from '@/lib/admin';
 import { categoryFormSchema, learningLessonSchema, productFormSchema } from '@/lib/validators';
 
-const originalAdminEmails = process.env.ADMIN_EMAILS;
-afterEach(() => { if (originalAdminEmails === undefined) delete process.env.ADMIN_EMAILS; else process.env.ADMIN_EMAILS = originalAdminEmails; });
+const originalOwnerId = process.env.DEVVAULT_OWNER_CLERK_USER_ID;
+afterEach(() => { if (originalOwnerId === undefined) delete process.env.DEVVAULT_OWNER_CLERK_USER_ID; else process.env.DEVVAULT_OWNER_CLERK_USER_ID = originalOwnerId; });
 
 describe('admin authorization and query safety', () => {
-  it('allows only normalized server-configured admin emails', () => {
-    process.env.ADMIN_EMAILS = 'owner@example.com, ops@example.com';
-    expect(isAdminEmail(' OWNER@example.com ')).toBe(true);
-    expect(isAdminEmail('customer@example.com')).toBe(false);
-    expect(isAdminEmail(undefined)).toBe(false);
+  it('allows only the exact server-configured owner Clerk identity', () => {
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'user_owner123456';
+    expect(isOwnerClerkUserId('user_owner123456')).toBe(true);
+    expect(isOwnerClerkUserId('user_student12345')).toBe(false);
+    expect(isOwnerClerkUserId(undefined)).toBe(false);
+  });
+
+  it('fails closed for missing or malformed owner configuration', () => {
+    delete process.env.DEVVAULT_OWNER_CLERK_USER_ID;
+    expect(isOwnerClerkUserId('user_owner123456')).toBe(false);
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'owner@example.com';
+    expect(isValidOwnerClerkUserId(process.env.DEVVAULT_OWNER_CLERK_USER_ID)).toBe(false);
+    expect(isOwnerClerkUserId('owner@example.com')).toBe(false);
+  });
+
+  it('ignores forged role-like browser data because identity is the only input', () => {
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'user_owner123456';
+    const forgedPayload = { userId: 'user_student12345', role: 'admin', publicMetadata: { role: 'admin' } };
+    expect(isOwnerClerkUserId(forgedPayload.userId)).toBe(false);
+  });
+
+  it('does not remove student identity from the owner account', () => {
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'user_owner123456';
+    expect(accountCapabilities('user_owner123456')).toEqual({ student: true, admin: true });
+  });
+
+  it('keeps every other authenticated account student-only', () => {
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'user_owner123456';
+    expect(accountCapabilities('user_student12345')).toEqual({ student: true, admin: false });
+  });
+
+  it('gives anonymous requests neither student nor admin capabilities', () => {
+    process.env.DEVVAULT_OWNER_CLERK_USER_ID = 'user_owner123456';
+    expect(accountCapabilities(null)).toEqual({ student: false, admin: false });
   });
 
   it('normalizes pagination and escapes search expressions', () => {

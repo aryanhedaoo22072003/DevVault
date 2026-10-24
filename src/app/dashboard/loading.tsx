@@ -1,0 +1,3 @@
+export default function DashboardLoading() {
+  return <main className="min-h-screen bg-slate-950 px-4 py-24 text-slate-100"><div className="mx-auto max-w-7xl animate-pulse"><div className="h-4 w-40 rounded bg-violet-300/10"/><div className="mt-4 h-12 w-full max-w-xl rounded-2xl bg-white/10"/><div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{[1,2,3,4,5].map((item)=><div key={item} className="h-32 rounded-3xl bg-white/5"/>)}</div><div className="mt-8 grid gap-6 lg:grid-cols-2"><div className="h-80 rounded-3xl bg-white/5"/><div className="h-80 rounded-3xl bg-white/5"/></div><p className="sr-only">Loading your student dashboard</p></div></main>;
+}

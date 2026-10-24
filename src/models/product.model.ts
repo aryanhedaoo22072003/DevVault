@@ -22,6 +22,9 @@ export interface ProductDocument extends Document {
   frameworks: string[];
   tags: string[];
   screenshots: string[];
+  includedItems: string[];
+  intendedAudience: string[];
+  prerequisites: string[];
   ownerId?: mongoose.Types.ObjectId;
   status: ProductStatus;
   isPublished: boolean;
@@ -53,6 +56,9 @@ const productSchema = new Schema<ProductDocument>(
     frameworks: [{ type: String, trim: true }],
     tags: [{ type: String, trim: true }],
     screenshots: [{ type: String, trim: true }],
+    includedItems: [{ type: String, trim: true, maxlength: 300 }],
+    intendedAudience: [{ type: String, trim: true, maxlength: 300 }],
+    prerequisites: [{ type: String, trim: true, maxlength: 300 }],
     ownerId: { type: Schema.Types.ObjectId, ref: 'UserProfile', default: null },
     status: { type: String, enum: ['draft', 'published', 'archived'], default: 'published' },
     isPublished: { type: Boolean, default: true },

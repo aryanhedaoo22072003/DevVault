@@ -1,97 +1,23 @@
+import { CheckCircle2, Download, LockKeyhole, PackageOpen, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { AddToCartButton } from '@/components/add-to-cart-button';
 import { Navbar } from '@/components/navbar';
 import { getMarketplaceProductBySlug } from '@/lib/marketplace';
 
+const formatBytes = (bytes: number) => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+const formatName = (value: string) => ({ 'application/pdf': 'PDF', 'application/zip': 'ZIP', 'application/x-zip-compressed': 'ZIP', 'text/plain': 'Text', 'text/markdown': 'Markdown', 'application/json': 'JSON' }[value] ?? value.toUpperCase());
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const product = await getMarketplaceProductBySlug(slug);
-
-  if (!product) {
-    return (
-      <main className="min-h-screen"><Navbar /><div className="section-shell py-20">
-        <div className="rounded-[2rem] border border-dashed border-white/10 bg-slate-900/60 p-10 text-center text-slate-300">
-          Product not found.
-        </div>
-      </div></main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <Navbar />
-      <div className="section-shell py-12 md:py-16">
-        <Link href="/marketplace" className="mb-8 inline-flex items-center text-sm text-violet-200">
-          ← Back to marketplace
-        </Link>
-
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <Image
-              src={product.image}
-              alt={product.title}
-              width={1200}
-              height={760}
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="h-[420px] w-full rounded-[2rem] object-cover shadow-glow"
-            />
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {[product.image, product.image, product.image].map((image, index) => (
-                <Image
-                  key={`${product.id}-${index}`}
-                  src={image}
-                  alt={`${product.title} preview ${index + 1}`}
-                  width={600}
-                  height={220}
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="h-28 w-full rounded-2xl object-cover"
-                />
-              ))}
-            </div>
-          </div>
-
-          <aside className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-6 shadow-glow">
-            <p className="text-xs uppercase tracking-[0.18em] text-violet-300">{product.category}</p>
-            <h1 className="mt-4 text-4xl font-semibold text-white">{product.title}</h1>
-            <p className="mt-4 text-sm leading-7 text-slate-300">{product.description}</p>
-
-            <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 p-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Price</p>
-                <p className="mt-2 text-3xl font-semibold text-white">{product.price}</p>
-              </div>
-              <div className="text-right text-sm text-slate-300">
-                <div>{product.format}</div>
-                <div className="mt-2 text-violet-200">{product.demoLabel}</div>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <AddToCartButton
-                product={{
-                  slug: product.slug,
-                  title: product.title,
-                  category: product.category,
-                  image: product.image,
-                  price: product.price,
-                }}
-                className="w-full justify-center gap-2"
-              />
-              <button className="w-full rounded-full border border-white/10 bg-white/5 px-5 py-3 font-medium text-slate-200 transition hover:bg-white/10" type="button">
-                Download demo
-              </button>
-            </div>
-
-            <ul className="mt-8 space-y-3 text-sm text-slate-300">
-              <li>• Includes source files and setup notes</li>
-              <li>• Demo content and guided walkthroughs included</li>
-              <li>• Suitable for product teams, learners, and solo builders</li>
-            </ul>
-          </aside>
-        </div>
-      </div>
-    </main>
-  );
+  const { slug } = await params; const product = await getMarketplaceProductBySlug(slug);
+  if (!product) return <main className="min-h-screen"><Navbar/><div className="section-shell py-20"><div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/60 p-10 text-center"><h1 className="text-2xl font-semibold text-white">Product not found</h1><p className="mt-2 text-slate-400">This product may be unpublished, archived, or unavailable.</p><Link href="/marketplace" className="mt-5 inline-flex text-violet-300">Return to marketplace →</Link></div></div></main>;
+  return <main className="min-h-screen bg-slate-950 text-slate-100"><Navbar/><div className="section-shell py-10 md:py-14"><Link href="/marketplace" className="text-sm font-semibold text-violet-300">← Back to marketplace</Link>
+    <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,.85fr)]"><div><Image src={product.image} alt={product.title} width={1200} height={760} priority sizes="(max-width: 1024px) 100vw, 60vw" className="h-72 w-full rounded-3xl object-cover shadow-glow sm:h-[430px]"/><section className="aurora-panel mt-6 rounded-3xl p-6 md:p-8"><div className="flex flex-wrap gap-2"><span className="rounded-full bg-violet-400/10 px-3 py-1 text-xs font-semibold text-violet-200">{product.category}</span><span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">{product.priceType === 'free' ? 'Free' : 'Paid product'}</span></div><h1 className="mt-5 text-4xl font-semibold text-white md:text-5xl">{product.title}</h1><p className="mt-4 text-lg leading-8 text-slate-300">{product.summary}</p><div className="mt-7 whitespace-pre-line text-sm leading-7 text-slate-300">{product.description}</div></section>
+      <div className="mt-6 grid gap-6 md:grid-cols-2"><InfoList icon={<PackageOpen className="h-5 w-5"/>} title="What’s included" items={product.includedItems} empty="The owner has not published a detailed contents list yet."/><InfoList icon={<Users className="h-5 w-5"/>} title="Who it’s for" items={product.intendedAudience} empty="Audience guidance has not been published yet."/><InfoList icon={<CheckCircle2 className="h-5 w-5"/>} title="Prerequisites" items={product.prerequisites} empty="No prerequisites have been specified."/><InfoList icon={<LockKeyhole className="h-5 w-5"/>} title="Verified delivery formats" items={product.deliveryFormats.map(formatName)} empty="No active private delivery files are associated yet."/></div>
+      {product.previewAssets.length?<section className="aurora-panel mt-6 rounded-3xl p-6"><h2 className="text-xl font-semibold text-white">Sample previews</h2><p className="mt-2 text-sm text-slate-400">These owner-approved samples are public excerpts. Paid delivery files remain private.</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{product.previewAssets.map((asset)=><a key={asset.id} href={`/api/marketplace/previews/${asset.id}`} className="flex items-center justify-between rounded-2xl border border-violet-400/20 bg-violet-400/5 p-4 hover:border-violet-400/40"><span><span className="block font-semibold text-white">{asset.title}</span><span className="mt-1 block text-xs text-slate-500">{formatName(asset.mimeType)} · {formatBytes(asset.fileSize)}</span></span><Download className="h-5 w-5 text-violet-300"/></a>)}</div></section>:null}
+    </div><aside className="aurora-card h-fit rounded-3xl p-6 lg:sticky lg:top-28"><div className={`rounded-2xl border p-4 ${product.isPurchasable?'border-emerald-400/20 bg-emerald-400/5':'border-amber-400/20 bg-amber-400/5'}`}><p className={`text-sm font-semibold ${product.isPurchasable?'text-emerald-200':'text-amber-200'}`}>{product.availabilityLabel}</p><p className="mt-1 text-xs leading-5 text-slate-400">{product.isPurchasable?'At least one active private delivery file is verified. Checkout remains Stripe test mode only.':'Checkout is disabled until the owner associates an active private delivery file.'}</p></div><div className="mt-6 flex items-end justify-between gap-3"><div><p className="text-xs uppercase tracking-wider text-slate-500">Price</p><p className="mt-2 text-3xl font-semibold text-white">{product.priceType==='free'?'Free':product.price}</p></div><span className="text-right text-sm text-slate-400">{product.format}</span></div>{product.isPurchasable?<AddToCartButton product={{slug:product.slug,title:product.title,category:product.category,image:product.image,priceInr:product.priceInr}} className="mt-6 w-full justify-center"/>:<button disabled className="mt-6 w-full rounded-full border border-white/10 bg-white/5 px-5 py-3 font-semibold text-slate-500">Currently unavailable</button>}<p className="mt-4 text-center text-xs text-slate-500">Paid files require verified payment and entitlement on every download.</p></aside></div>
+    {product.relatedProducts.length?<section className="mt-12"><h2 className="text-2xl font-semibold text-white">Related products</h2><div className="mt-5 grid gap-5 md:grid-cols-3">{product.relatedProducts.map((item)=><Link key={item.id} href={`/marketplace/${item.slug}`} className="aurora-card overflow-hidden rounded-3xl p-4"><Image src={item.image} alt="" width={600} height={300} className="h-36 w-full rounded-2xl object-cover"/><p className="mt-4 text-xs uppercase tracking-wider text-violet-300">{item.category}</p><h3 className="mt-2 text-lg font-semibold text-white">{item.title}</h3><p className="mt-2 text-sm text-slate-400">{item.priceType==='free'?'Free':item.price}</p></Link>)}</div></section>:null}
+  </div></main>;
 }
+
+function InfoList({icon,title,items,empty}:{icon:React.ReactNode;title:string;items:string[];empty:string}) { return <section className="aurora-panel rounded-3xl p-5"><div className="flex items-center gap-2 text-violet-300">{icon}<h2 className="font-semibold text-white">{title}</h2></div>{items.length?<ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">{items.map((item)=><li key={item} className="flex gap-2"><span className="text-violet-300">✓</span><span>{item}</span></li>)}</ul>:<p className="mt-4 text-sm leading-6 text-slate-500">{empty}</p>}</section>}

@@ -3,10 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const syncUserProfile = vi.fn();
 const findProducts = vi.fn();
 const getStripeTestConfig = vi.fn();
+const findAssets = vi.fn();
+const assetExists = vi.fn();
 vi.mock('@/lib/auth', () => ({ syncUserProfile }));
 vi.mock('@/lib/db', () => ({ connectToDatabase: vi.fn() }));
 vi.mock('@/models/order.model', () => ({ OrderModel: { create: vi.fn(), updateOne: vi.fn() } }));
 vi.mock('@/models/product.model', () => ({ ProductModel: { find: findProducts } }));
+vi.mock('@/models/digital-asset.model', () => ({ DigitalAssetModel: { find: findAssets } }));
+vi.mock('@/lib/private-storage', () => ({ privateStorage: { exists: assetExists } }));
 vi.mock('@/lib/stripe', () => ({ getStripeClient: vi.fn(), getStripeTestConfig }));
 
 describe('POST /api/checkout authorization', () => {
@@ -14,6 +18,8 @@ describe('POST /api/checkout authorization', () => {
     syncUserProfile.mockReset();
     findProducts.mockReset();
     getStripeTestConfig.mockReset();
+    findAssets.mockReset().mockReturnValue({ select: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }) });
+    assetExists.mockReset().mockResolvedValue(false);
   });
 
   it('rejects unauthenticated checkout before processing the cart', async () => {

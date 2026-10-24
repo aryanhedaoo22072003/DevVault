@@ -22,11 +22,11 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 text-sm font-bold text-white">
+              <div className="brand-mark flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white">
                 D
               </div>
               <div className="text-lg font-semibold text-white">
-                Dev<span className="text-cyan-400">Vault</span>
+                Dev<span className="text-violet-400">Vault</span>
               </div>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">

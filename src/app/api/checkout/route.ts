@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 
 import { syncUserProfile } from '@/lib/auth';
-import { buildOrderPricing, parseCheckoutSlugs } from '@/lib/checkout';
+import { buildOrderPricing, parseCheckoutSlugs, unavailableCheckoutSlugs } from '@/lib/checkout';
 import { connectToDatabase } from '@/lib/db';
 import { env } from '@/lib/env';
 import { getStripeClient, getStripeTestConfig } from '@/lib/stripe';
 import { OrderModel } from '@/models/order.model';
 import { ProductModel } from '@/models/product.model';
+import { DigitalAssetModel } from '@/models/digital-asset.model';
+import { privateStorage } from '@/lib/private-storage';
 
 export async function POST(request: Request) {
   const session = await syncUserProfile();
@@ -36,6 +38,20 @@ export async function POST(request: Request) {
       isPublished: true,
       status: 'published',
     }).lean();
+
+    const deliveryAssets = await DigitalAssetModel.find({
+      product: { $in: products.map((product) => product._id) },
+      isPublic: false,
+      isActive: true,
+      storageKey: { $nin: ['', null] },
+    }).select('product storageKey').lean();
+    const verifiedDeliveryAssets = await Promise.all(deliveryAssets.map(async (asset) => ({
+      productId: String(asset.product),
+      exists: await privateStorage.exists(asset.storageKey!),
+    })));
+    const deliverableProductIds = verifiedDeliveryAssets.filter((asset) => asset.exists).map((asset) => asset.productId);
+    const unavailable = unavailableCheckoutSlugs(products, deliverableProductIds);
+    if (unavailable.length) throw new Error(`Product cannot currently be fulfilled: ${unavailable.join(', ')}`);
 
     const pricing = buildOrderPricing(slugs, products);
 

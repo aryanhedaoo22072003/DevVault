@@ -20,7 +20,7 @@ export default function SignUpPage() {
 
   return (
     <main className="min-h-screen bg-slate-950"><Navbar /><div className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-6 py-10">
-      <SignUp appearance={{ variables: { colorPrimary: '#0D9488', colorBackground: '#0B1E30', colorForeground: '#F8FAFC', borderRadius: '1rem' } }} />
+      <SignUp appearance={{ variables: { colorPrimary: 'var(--brand)', colorBackground: 'var(--surface)', colorForeground: 'var(--foreground)', borderRadius: '1rem' } }} />
     </div>
     </main>
   );

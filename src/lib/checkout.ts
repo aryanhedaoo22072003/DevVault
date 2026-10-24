@@ -1,5 +1,10 @@
 export type CheckoutProduct = { _id?: unknown; slug: string; title: string; category?: string; imageUrl?: string; priceInr: number };
 
+export function unavailableCheckoutSlugs(products: CheckoutProduct[], fulfillableProductIds: Iterable<string>) {
+  const fulfillable = new Set(fulfillableProductIds);
+  return products.filter((product) => !fulfillable.has(String(product._id))).map((product) => product.slug);
+}
+
 export function parseCheckoutSlugs(payload: unknown) {
   if (!payload || typeof payload !== 'object') return [];
   const items = (payload as { items?: unknown }).items;

@@ -15,6 +15,7 @@ import { LearningPathModel } from '@/models/learning-content.model';
 import { learningLessonSchema } from '@/lib/validators';
 import { canDeactivateDeliveryAsset, publicationUpdate, type PublicationState } from '@/lib/product-management';
 import { OrderModel } from '@/models/order.model';
+import { requireSafeAssetUpload } from '@/lib/asset-upload-policy';
 
 function slugify(value: string) {
   return value
@@ -229,6 +230,7 @@ export async function toggleAssetAction(assetId: string, isActive: boolean) {
 
 export async function replaceProductAssetAction(assetId: string, formData: FormData) {
   await requireAdminAccess();
+  requireSafeAssetUpload();
   const file = formData.get('file'); const title = String(formData.get('title') ?? '').trim();
   if (!(file instanceof File) || !title) throw new Error('Replacement title and file are required.');
   await connectToDatabase();
@@ -269,6 +271,7 @@ export async function saveLearningContentAction(formData: FormData) {
 
 export async function uploadProductAssetAction(formData: FormData) {
   await requireAdminAccess();
+  requireSafeAssetUpload();
   const productId = String(formData.get('productId') ?? '');
   const title = String(formData.get('title') ?? '').trim();
   const file = formData.get('file');

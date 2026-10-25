@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const wrappedContent = hasClerkConfig ? <ClerkProvider appearance={{ variables: { colorPrimary: 'var(--brand)', colorBackground: 'var(--surface)', colorForeground: 'var(--foreground)', borderRadius: '0.875rem' } }}>{children}</ClerkProvider> : children;
+  const wrappedContent = hasClerkConfig ? <ClerkProvider afterSignOutUrl="/" appearance={{ variables: { colorPrimary: 'var(--brand)', colorBackground: 'var(--surface)', colorForeground: 'var(--foreground)', borderRadius: '0.875rem' } }}>{children}</ClerkProvider> : children;
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark">

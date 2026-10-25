@@ -11,6 +11,10 @@ describe('entitlement provisioning rules', () => {
     expect(entitlementState(1)).toBe('available');
   });
 
+  it('keeps multi-file products available without collapsing their asset count', () => {
+    expect(entitlementState(2)).toBe('available');
+  });
+
   it('requires every product in a multi-product order before fulfillment', () => {
     expect(allItemsProvisioned(['one', 'two'], ['one'])).toBe(false);
     expect(allItemsProvisioned(['one', 'two'], ['one', 'two'])).toBe(true);

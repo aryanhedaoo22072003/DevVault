@@ -44,7 +44,7 @@ describe('protected asset downloads', () => {
     authorizeAssetDownload.mockResolvedValue({
       order: { _id: 'order' },
       entitlement: { productId: 'product' },
-      asset: { _id: 'asset', storageKey: 'product/file.pdf', originalFilename: 'guide.pdf', title: 'Guide', mimeType: 'application/pdf' },
+      asset: { _id: 'asset', storageKey: 'product/file.pdf', storageProvider: 's3-private', originalFilename: 'guide.pdf', title: 'Guide', mimeType: 'application/pdf', fileSize: 15 },
     });
     openPrivateFile.mockResolvedValue({ stream: Readable.from(Buffer.from('private-content')), size: 15 });
     recordDownload.mockResolvedValue({});
@@ -55,6 +55,7 @@ describe('protected asset downloads', () => {
     expect(response.headers.get('cache-control')).toContain('no-store');
     expect(response.headers.get('content-disposition')).toContain('guide.pdf');
     await expect(response.text()).resolves.toBe('private-content');
+    expect(openPrivateFile).toHaveBeenCalledWith('product/file.pdf', 's3-private', { expectedSize: 15, expectedMimeType: 'application/pdf' });
     expect(recordDownload).toHaveBeenCalledOnce();
   });
 

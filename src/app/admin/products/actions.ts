@@ -212,10 +212,10 @@ export async function toggleAssetAction(assetId: string, isActive: boolean) {
   if (!current) throw new Error('Asset not found.');
   if (!isActive && !current.isPublic) {
     const [otherAssets, hasPaidOrders] = await Promise.all([
-      DigitalAssetModel.find({ product: current.product, _id: { $ne: current._id }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('storageKey').lean(),
+      DigitalAssetModel.find({ product: current.product, _id: { $ne: current._id }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('storageKey storageProvider fileSize mimeType').lean(),
       OrderModel.exists({ paymentStatus: 'paid', 'items.productId': String(current.product) }),
     ]);
-    const otherAssetChecks = await Promise.all(otherAssets.map((asset) => privateStorage.exists(asset.storageKey!)));
+    const otherAssetChecks = await Promise.all(otherAssets.map((asset) => privateStorage.exists(asset.storageKey!, asset.storageProvider, { expectedSize: asset.fileSize, expectedMimeType: asset.mimeType })));
     const otherActiveDeliveryAssets = otherAssetChecks.filter(Boolean).length;
     if (!canDeactivateDeliveryAsset({ isPublic: false, hasPaidOrders: Boolean(hasPaidOrders), otherActiveDeliveryAssets })) throw new Error('Cannot deactivate the last delivery asset for a product with paid purchases. Replace it first.');
   }
@@ -236,7 +236,7 @@ export async function replaceProductAssetAction(assetId: string, formData: FormD
   if (!previous) throw new Error('Asset not found.');
   if (previous.isPublic) validatePublicPreviewUpload(file);
   const stored = await privateStorage.put(file, String(previous.product));
-  const replacement = await DigitalAssetModel.create({ product: previous.product, title, assetType: stored.mimeType === 'application/pdf' ? 'pdf' : stored.mimeType.includes('zip') ? 'zip' : 'other', storageProvider: 'local-private', storageKey: stored.key, originalFilename: stored.filename, mimeType: stored.mimeType, fileSize: stored.size, isPublic: previous.isPublic, isActive: true, replacesAssetId: previous._id });
+  const replacement = await DigitalAssetModel.create({ product: previous.product, title, assetType: stored.mimeType === 'application/pdf' ? 'pdf' : stored.mimeType.includes('zip') ? 'zip' : 'other', storageProvider: stored.provider, storageKey: stored.key, originalFilename: stored.filename, mimeType: stored.mimeType, fileSize: stored.size, isPublic: previous.isPublic, isActive: true, replacesAssetId: previous._id });
   if (!previous.isPublic) await provisionPaidOrdersForProduct(String(previous.product));
   await DigitalAssetModel.updateOne({ _id: previous._id }, { $set: { isActive: false, replacedByAssetId: replacement._id, replacedAt: new Date() } });
   if (!previous.isPublic) await provisionPaidOrdersForProduct(String(previous.product));
@@ -285,7 +285,7 @@ export async function uploadProductAssetAction(formData: FormData) {
     product: product._id,
     title,
     assetType,
-    storageProvider: 'local-private',
+    storageProvider: stored.provider,
     storageKey: stored.key,
     originalFilename: stored.filename,
     mimeType: stored.mimeType,

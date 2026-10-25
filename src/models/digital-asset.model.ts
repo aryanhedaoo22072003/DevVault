@@ -7,7 +7,7 @@ export interface DigitalAssetDocument extends Document {
   title: string;
   assetType: DigitalAssetType;
   url?: string;
-  storageProvider: 'local-private';
+  storageProvider: 'local-private' | 's3-private';
   storageKey?: string;
   originalFilename?: string;
   mimeType?: string;
@@ -33,7 +33,7 @@ const digitalAssetSchema = new Schema<DigitalAssetDocument>(
       default: 'guide',
     },
     url: { type: String, default: '', trim: true },
-    storageProvider: { type: String, enum: ['local-private'], default: 'local-private' },
+    storageProvider: { type: String, enum: ['local-private', 's3-private'], default: 'local-private' },
     storageKey: { type: String, default: '', trim: true },
     originalFilename: { type: String, default: '', trim: true },
     mimeType: { type: String, default: '', trim: true },

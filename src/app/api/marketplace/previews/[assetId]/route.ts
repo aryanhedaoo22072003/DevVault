@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ass
   const asset = await DigitalAssetModel.findOne(buildPublicPreviewFilter(assetId)).lean();
   if (!asset?.storageKey) return Response.json({ error: 'Preview not found.' }, { status: 404 });
   try {
-    const file = await privateStorage.open(asset.storageKey);
+    const file = await privateStorage.open(asset.storageKey, asset.storageProvider, { expectedSize: asset.fileSize, expectedMimeType: asset.mimeType });
     const filename = sanitizeDownloadFilename(asset.originalFilename || `${asset.title}.bin`).replace(/"/g, '');
     return new Response(Readable.toWeb(file.stream) as ReadableStream, { headers: {
       'Content-Type': asset.mimeType || 'application/octet-stream',

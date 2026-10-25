@@ -170,8 +170,8 @@ export async function getMarketplaceProducts(rawParams: Record<string, string | 
       .skip((params.page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .lean();
-    const deliveryAssets = await DigitalAssetModel.find({ product: { $in: products.map((product) => product._id) }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('product storageKey').lean();
-    const verifiedAssets = await Promise.all(deliveryAssets.map(async (asset) => ({ productId: String(asset.product), exists: await privateStorage.exists(asset.storageKey!) })));
+    const deliveryAssets = await DigitalAssetModel.find({ product: { $in: products.map((product) => product._id) }, isPublic: false, isActive: true, storageKey: { $nin: ['', null] } }).select('product storageKey storageProvider fileSize mimeType').lean();
+    const verifiedAssets = await Promise.all(deliveryAssets.map(async (asset) => ({ productId: String(asset.product), exists: await privateStorage.exists(asset.storageKey!, asset.storageProvider, { expectedSize: asset.fileSize, expectedMimeType: asset.mimeType }) })));
     const fulfillable = new Set(verifiedAssets.filter((asset) => asset.exists).map((asset) => asset.productId));
     const items = products.map((product) => normalizeProductDocument(product, fulfillable.has(String(product._id))));
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
@@ -216,10 +216,10 @@ export async function getMarketplaceProductBySlug(slug: string) {
     }
 
     const [assets, related] = await Promise.all([
-      DigitalAssetModel.find({ product: product._id, isActive: true, storageKey: { $nin: ['', null] } }).select('_id title assetType originalFilename mimeType fileSize isPublic storageKey').lean(),
+      DigitalAssetModel.find({ product: product._id, isActive: true, storageKey: { $nin: ['', null] } }).select('_id title assetType originalFilename mimeType fileSize isPublic storageKey storageProvider').lean(),
       ProductModel.find({ _id: { $ne: product._id }, status: 'published', isPublished: true, category: product.category }).sort({ featured: -1, createdAt: -1 }).limit(3).lean(),
     ]);
-    const checkedAssets = await Promise.all(assets.map(async (asset) => ({ ...asset, fileExists: await privateStorage.exists(asset.storageKey!) })));
+    const checkedAssets = await Promise.all(assets.map(async (asset) => ({ ...asset, fileExists: await privateStorage.exists(asset.storageKey!, asset.storageProvider, { expectedSize: asset.fileSize, expectedMimeType: asset.mimeType }) })));
     const privateAssets = checkedAssets.filter((asset) => !asset.isPublic && asset.fileExists);
     const previewAssets = checkedAssets.filter((asset) => asset.isPublic && asset.fileExists).map((asset) => ({ id: String(asset._id), title: asset.title, mimeType: asset.mimeType || 'application/octet-stream', fileSize: asset.fileSize }));
     const deliveryFormats = [...new Set(privateAssets.map((asset) => asset.mimeType || asset.assetType).filter(Boolean))];

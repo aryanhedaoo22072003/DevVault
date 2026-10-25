@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ass
   if (!access) return NextResponse.json({ error: 'Download not found or not available for this account.' }, { status: 404 });
 
   try {
-    const file = await privateStorage.open(access.asset.storageKey!);
+    const file = await privateStorage.open(access.asset.storageKey!, access.asset.storageProvider, { expectedSize: access.asset.fileSize, expectedMimeType: access.asset.mimeType });
     const filename = sanitizeDownloadFilename(access.asset.originalFilename || `${access.asset.title}.bin`);
     await DownloadActivityModel.create({
       userId: session.userId,

@@ -5,5 +5,8 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
-  test: { environment: 'node' },
+  test: {
+    environment: 'node',
+    exclude: ['**/node_modules/**', '**/.git/**', '**/.devvault-private/**'],
+  },
 });

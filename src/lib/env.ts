@@ -9,6 +9,14 @@ export const env = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
   privateStorageRoot: process.env.PRIVATE_STORAGE_ROOT ?? '.devvault-private',
   maxPrivateAssetBytes: Number(process.env.MAX_PRIVATE_ASSET_BYTES ?? 52_428_800),
+  storageProvider: process.env.PRIVATE_STORAGE_PROVIDER ?? 'local-private',
+  s3Endpoint: process.env.S3_PRIVATE_ENDPOINT ?? '',
+  s3Region: process.env.S3_PRIVATE_REGION ?? '',
+  s3Bucket: process.env.S3_PRIVATE_BUCKET ?? '',
+  s3Prefix: process.env.S3_PRIVATE_PREFIX ?? 'devvault-assets',
+  s3ForcePathStyle: process.env.S3_PRIVATE_FORCE_PATH_STYLE === 'true',
+  s3AccessKeyId: process.env.S3_PRIVATE_ACCESS_KEY_ID ?? '',
+  s3SecretAccessKey: process.env.S3_PRIVATE_SECRET_ACCESS_KEY ?? '',
 };
 
 export const hasMongoConfig = Boolean(env.mongoUri);

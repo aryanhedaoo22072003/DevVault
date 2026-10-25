@@ -44,10 +44,13 @@ export async function POST(request: Request) {
       isPublic: false,
       isActive: true,
       storageKey: { $nin: ['', null] },
-    }).select('product storageKey').lean();
+    }).select('product storageKey storageProvider fileSize mimeType').lean();
     const verifiedDeliveryAssets = await Promise.all(deliveryAssets.map(async (asset) => ({
       productId: String(asset.product),
-      exists: await privateStorage.exists(asset.storageKey!),
+      exists: await privateStorage.exists(asset.storageKey!, asset.storageProvider, {
+        expectedSize: asset.fileSize,
+        expectedMimeType: asset.mimeType,
+      }),
     })));
     const deliverableProductIds = verifiedDeliveryAssets.filter((asset) => asset.exists).map((asset) => asset.productId);
     const unavailable = unavailableCheckoutSlugs(products, deliverableProductIds);

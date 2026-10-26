@@ -13,9 +13,15 @@ const fallbackProxy = (request: NextRequest) => {
 export default hasClerkConfig
   ? clerkMiddleware(async (auth, request) => {
       if (isProtectedRoute(request)) {
-        await auth.protect();
+        const signInUrl = new URL('/sign-in', request.url);
+        signInUrl.searchParams.set('redirect_url', request.url);
+        await auth.protect({ unauthenticatedUrl: signInUrl.toString() });
       }
-    }, { authorizedParties: clerkAuthorizedParties() })
+    }, {
+      authorizedParties: clerkAuthorizedParties(),
+      signInUrl: '/sign-in',
+      signUpUrl: '/sign-up',
+    })
   : fallbackProxy;
 
 export const config = {

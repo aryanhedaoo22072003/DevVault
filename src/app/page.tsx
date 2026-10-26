@@ -30,7 +30,7 @@ export default async function Home() {
               <Link href="/marketplace" className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10">
                 Explore catalog
               </Link>
-              <Link href="/dashboard" className="rounded-full bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500">
+              <Link href="/dashboard" prefetch={false} className="rounded-full bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500">
                 Go to dashboard
               </Link>
             </div>

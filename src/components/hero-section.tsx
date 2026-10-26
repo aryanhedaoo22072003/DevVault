@@ -31,7 +31,7 @@ export function HeroSection() {
                 Explore marketplace <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/dashboard" prefetch={false}>
               <Button variant="secondary" size="lg" className="gap-2">
                 <Play className="h-4 w-4" /> View dashboard
               </Button>

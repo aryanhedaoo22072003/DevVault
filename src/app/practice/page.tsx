@@ -152,12 +152,14 @@ export default async function PracticePage({
             <Link href="/practice/sql" className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-slate-200">SQL Playground</Link>
             <Link
               href="/dashboard/practice"
+              prefetch={false}
               className="rounded-full bg-gradient-to-r from-violet-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"
             >
               Practice progress
             </Link>
             <Link
               href="/dashboard/submissions"
+              prefetch={false}
               className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-slate-200"
             >
               Submissions

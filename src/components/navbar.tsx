@@ -39,7 +39,7 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[0.035] p-1 text-sm text-slate-300 md:flex">
           {navItems.map((item) => (
-            <Link key={item.label} href={item.href} aria-current={active(item.href)?'page':undefined} className={`rounded-full px-3 py-2 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>
+            <Link key={item.label} href={item.href} prefetch={item.href.startsWith('/dashboard') ? false : undefined} aria-current={active(item.href)?'page':undefined} className={`rounded-full px-3 py-2 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>
               {item.label}
             </Link>
           ))}
@@ -102,7 +102,7 @@ export function Navbar() {
         </div>
       </div>
       <nav className="section-shell flex gap-1 overflow-x-auto border-t border-white/5 py-2 text-xs text-slate-300 md:hidden" aria-label="Mobile navigation">
-        {navItems.map((item) => <Link key={item.label} href={item.href} aria-current={active(item.href)?'page':undefined} className={`shrink-0 rounded-full px-3 py-1.5 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>{item.label}</Link>)}
+        {navItems.map((item) => <Link key={item.label} href={item.href} prefetch={item.href.startsWith('/dashboard') ? false : undefined} aria-current={active(item.href)?'page':undefined} className={`shrink-0 rounded-full px-3 py-1.5 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>{item.label}</Link>)}
         <button type="button" onClick={openCart} className="shrink-0 rounded-full px-3 py-1.5">Cart{itemCount ? ` (${itemCount})` : ''}</button>
         <ThemeToggle compact />
         {clerkEnabled ? <><Show when="signed-out"><Link href="/sign-in" className="shrink-0 rounded-full px-3 py-1.5">Sign in</Link></Show><Show when="signed-in"><UserButton appearance={{ elements: { avatarBox: 'h-8 w-8 ring-2 ring-violet-400/30' } }} /></Show></> : <Link href="/sign-in" className="shrink-0 rounded-full px-3 py-1.5">Sign in</Link>}

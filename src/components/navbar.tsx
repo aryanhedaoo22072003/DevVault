@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { Code2, Gauge, GraduationCap, LayoutDashboard, Library, PackageCheck, Search, ShieldCheck, ShoppingCart } from 'lucide-react';
 
 import { useCart } from '@/components/cart-provider';
+import { BrandLogo } from '@/components/brand-logo';
 import { navItems } from '@/data/catalog';
 
 import { Button } from './ui/button';
@@ -15,6 +17,8 @@ export function Navbar() {
   const { itemCount, openCart } = useCart();
   const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
   const [isOwner, setIsOwner] = useState(false);
+  const pathname=usePathname();
+  const active=(href:string)=>href==='/practice'?pathname.startsWith('/practice')&&!pathname.startsWith('/practice/tracks'):pathname===href||pathname.startsWith(`${href}/`);
 
   useEffect(() => {
     if (!clerkEnabled) return;
@@ -29,19 +33,13 @@ export function Navbar() {
   return (
     <header className="relative sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-2xl">
       <div className="section-shell flex h-[4.5rem] min-w-0 items-center justify-between gap-2 md:gap-6">
-        <Link href="/" className="flex shrink-0 items-center gap-3">
-          <div className="brand-mark relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-sm font-bold text-white">
-            <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.45),transparent_35%)]" />
-            <span className="relative">D</span>
-          </div>
-          <div className="hidden text-lg font-semibold tracking-tight text-white sm:block">
-            Dev<span className="text-violet-300">Vault</span>
-          </div>
+        <Link href="/" className="shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300" aria-label="DevVault home">
+          <BrandLogo priority />
         </Link>
 
         <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[0.035] p-1 text-sm text-slate-300 md:flex">
           {navItems.map((item) => (
-            <Link key={item.label} href={item.href} className="rounded-full px-3 py-2 transition hover:bg-white/[0.06] hover:text-white">
+            <Link key={item.label} href={item.href} aria-current={active(item.href)?'page':undefined} className={`rounded-full px-3 py-2 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>
               {item.label}
             </Link>
           ))}
@@ -104,7 +102,7 @@ export function Navbar() {
         </div>
       </div>
       <nav className="section-shell flex gap-1 overflow-x-auto border-t border-white/5 py-2 text-xs text-slate-300 md:hidden" aria-label="Mobile navigation">
-        {navItems.map((item) => <Link key={item.label} href={item.href} className="shrink-0 rounded-full px-3 py-1.5 transition hover:bg-white/[0.06] hover:text-white">{item.label}</Link>)}
+        {navItems.map((item) => <Link key={item.label} href={item.href} aria-current={active(item.href)?'page':undefined} className={`shrink-0 rounded-full px-3 py-1.5 transition ${active(item.href)?'bg-violet-500/15 text-violet-200':'hover:bg-white/[0.06] hover:text-white'}`}>{item.label}</Link>)}
         <button type="button" onClick={openCart} className="shrink-0 rounded-full px-3 py-1.5">Cart{itemCount ? ` (${itemCount})` : ''}</button>
         <ThemeToggle compact />
         {clerkEnabled ? <><Show when="signed-out"><Link href="/sign-in" className="shrink-0 rounded-full px-3 py-1.5">Sign in</Link></Show><Show when="signed-in"><UserButton appearance={{ elements: { avatarBox: 'h-8 w-8 ring-2 ring-violet-400/30' } }} /></Show></> : <Link href="/sign-in" className="shrink-0 rounded-full px-3 py-1.5">Sign in</Link>}

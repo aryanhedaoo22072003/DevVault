@@ -5,24 +5,17 @@ const config: Config = {
   theme: {
     extend: {
       boxShadow: {
-        glow: '0 0 0 1px rgba(57, 43, 76, 0.72), 0 30px 80px rgba(76, 29, 149, 0.18)',
+        glow: '0 0 0 1px rgba(52, 60, 73, 0.8), 0 20px 50px rgba(0, 0, 0, 0.24)',
       },
       colors: {
         brand: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
+          50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+          400: '#fb923c', 500: '#ff8a3d', 600: '#f97316', 700: '#c2410c',
+          800: '#9a3412', 900: '#7c2d12',
         },
       },
       backgroundImage: {
-        'hero-glow': 'radial-gradient(circle at top, rgba(124,58,237,0.24), transparent 44%)',
+        'hero-glow': 'radial-gradient(circle at top, rgba(255,138,61,0.16), transparent 48%)',
       },
     },
   },

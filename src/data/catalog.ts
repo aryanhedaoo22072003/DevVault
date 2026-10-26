@@ -16,7 +16,8 @@ import {
 export type TechnologyCategory = {
   title: string;
   description: string;
-  count: string;
+  destination?: string;
+  destinationLabel?: string;
   accent: string;
   icon: LucideIcon;
 };
@@ -44,56 +45,54 @@ export const technologyCategories: TechnologyCategory[] = [
   {
     title: 'JavaScript & TypeScript',
     description: 'Modern frontend, backend, and product tooling for high-velocity teams.',
-    count: '36 kits',
+    destination: '/learn/javascript-zero-to-advanced',
+    destinationLabel: 'Open JavaScript course',
     accent: 'from-amber-500/20 via-yellow-500/10 to-transparent',
     icon: TerminalSquare,
   },
   {
     title: 'Python & AI',
     description: 'Prompt workflows, copilots, evaluation pipelines, and AI-powered learning systems.',
-    count: '42 packs',
+    destination: '/learn/python-zero-to-advanced',
+    destinationLabel: 'Open Python course',
     accent: 'from-violet-500/20 via-violet-500/10 to-transparent',
     icon: BrainCircuit,
   },
   {
     title: 'Data Engineering',
     description: 'Pipelines, warehousing patterns, and analytics stacks for production data teams.',
-    count: '28 pipelines',
+    destination: '/learn/data-engineering-zero-to-advanced',
+    destinationLabel: 'Open Data Engineering course',
     accent: 'from-violet-500/20 via-indigo-500/10 to-transparent',
     icon: Database,
   },
   {
     title: 'Frontend Platforms',
     description: 'Design systems, component libraries, and conversion-focused UX patterns.',
-    count: '51 kits',
     accent: 'from-fuchsia-500/20 via-purple-500/10 to-transparent',
     icon: Aperture,
   },
   {
     title: 'Cloud & DevOps',
     description: 'Infrastructure blueprints, observability patterns, and deployment guardrails.',
-    count: '24 blueprints',
     accent: 'from-violet-500/20 via-violet-500/10 to-transparent',
     icon: ShieldCheck,
   },
   {
     title: 'Mobile & UX',
     description: 'App-ready flows, mobile patterns, and product design systems for fast iteration.',
-    count: '18 systems',
     accent: 'from-emerald-500/20 via-green-500/10 to-transparent',
     icon: Palette,
   },
   {
     title: 'Go & Rust',
     description: 'Performance-first backend systems, secure APIs, and low-latency tooling.',
-    count: '15 bundles',
     accent: 'from-orange-500/20 via-rose-500/10 to-transparent',
     icon: Cpu,
   },
   {
     title: 'Java, C#, .NET',
     description: 'Enterprise-ready architecture templates and scalable application foundations.',
-    count: '22 resources',
     accent: 'from-indigo-500/20 via-violet-500/10 to-transparent',
     icon: Layers3,
   },
@@ -193,7 +192,7 @@ export const productHighlights = [
 
 export const navItems: NavItem[] = [
   { label: 'Marketplace', href: '/marketplace' },
-  { label: 'Learning', href: '/marketplace?category=Learning' },
+  { label: 'Learning', href: '/learn' },
   { label: 'Practice', href: '/practice' },
   { label: 'Tracks', href: '/practice/tracks' },
   { label: 'Dashboard', href: '/dashboard' },

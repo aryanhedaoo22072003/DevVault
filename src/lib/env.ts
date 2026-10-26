@@ -22,3 +22,16 @@ export const env = {
 export const hasMongoConfig = Boolean(env.mongoUri);
 export const hasClerkConfig = Boolean(env.clerkPublishableKey && env.clerkSecretKey);
 export const hasAdminConfig = /^user_[A-Za-z0-9]{8,}$/.test(env.ownerClerkUserId.trim());
+
+export function clerkAuthorizedParties(appUrl = env.appUrl) {
+  try {
+    const url = new URL(appUrl);
+    const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    if ((url.protocol !== 'https:' && !isLocal) || url.pathname !== '/' || url.search || url.hash) throw new Error();
+    return [url.origin];
+  } catch {
+    // A configured allowlist is safer than silently disabling Clerk's azp check.
+    // This deliberately matches no real deployment and therefore fails closed.
+    return ['https://invalid.devvault.local'];
+  }
+}

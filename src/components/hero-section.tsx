@@ -12,13 +12,13 @@ export function HeroSection() {
 
       <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-sm luxury-accent">
-            <Sparkles className="h-4 w-4" />
-            Digital products • learning • coding practice • AI assistance
+          <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-sm luxury-accent">
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <span className="min-w-0">Digital products • learning • coding practice • AI assistance</span>
           </div>
 
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
-            Build, learn, and ship inside one <span className="bg-gradient-to-r from-violet-300 via-violet-300 to-amber-200 bg-clip-text text-transparent">exceptional workspace.</span>
+          <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
+            Build, learn, and ship inside one <span className="bg-gradient-to-r from-orange-300 via-orange-400 to-indigo-400 bg-clip-text text-transparent">exceptional workspace.</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
@@ -58,7 +58,7 @@ export function HeroSection() {
                 <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               </div>
-              <div className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-violet-200">
+              <div className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-indigo-300">
                 Learning workspace
               </div>
             </div>
@@ -69,7 +69,7 @@ export function HeroSection() {
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Current objective</p>
                   <p className="mt-2 text-xl font-semibold text-white">Build a shipping-ready dashboard</p>
                 </div>
-                <div className="rounded-2xl bg-violet-500/10 p-2 text-violet-200">
+                <div className="rounded-2xl bg-indigo-500/10 p-2 text-indigo-300">
                   <Code2 className="h-5 w-5" />
                 </div>
               </div>

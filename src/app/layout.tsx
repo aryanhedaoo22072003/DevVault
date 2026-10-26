@@ -10,9 +10,14 @@ import { hasClerkConfig } from '@/lib/env';
 import './globals.css';
 
 export const metadata: Metadata = {
+  applicationName: 'DevVault',
   title: 'DevVault | Premium developer products and learning',
   description:
     'A premium marketplace for digital products, coding practice, learning pathways, and AI-powered developer workflows.',
+  icons: {
+    icon: [{ url: '/icon.png', type: 'image/png', sizes: '512x512' }],
+    apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

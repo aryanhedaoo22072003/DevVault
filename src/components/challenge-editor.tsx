@@ -16,7 +16,7 @@ import type { PublicTest } from "@/lib/browser-execution";
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[460px] items-center justify-center bg-[#09090f] text-sm text-slate-400">
+    <div className="flex h-[460px] items-center justify-center bg-[#0d1117] text-sm text-slate-400">
       Loading editor…
     </div>
   ),

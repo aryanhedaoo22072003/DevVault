@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { hasClerkConfig } from '@/lib/env';
+import { clerkAuthorizedParties, hasClerkConfig } from '@/lib/env';
 
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/admin(.*)']);
 
@@ -15,7 +15,7 @@ export default hasClerkConfig
       if (isProtectedRoute(request)) {
         await auth.protect();
       }
-    })
+    }, { authorizedParties: clerkAuthorizedParties() })
   : fallbackProxy;
 
 export const config = {

@@ -1,0 +1,2 @@
+'use client';
+export default function ErrorPage({reset}:{reset:()=>void}){return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100"><div className="aurora-card max-w-md rounded-3xl p-8 text-center"><h1 className="text-2xl font-semibold">Learning library unavailable</h1><p className="mt-3 text-slate-400">Your progress has not been changed. Please try loading the catalog again.</p><button type="button" onClick={reset} className="mt-6 rounded-full bg-violet-600 px-5 py-2.5 font-semibold text-white">Try again</button></div></main>}

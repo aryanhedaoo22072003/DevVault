@@ -11,3 +11,9 @@ npm-debug.log*
 *.tsbuildinfo
 .devvault-private/
 .devvault-backups/
+.vercel/
+/downloads/
+*.archive
+*.archive.gz
+*.age
+*.bson

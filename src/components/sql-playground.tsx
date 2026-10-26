@@ -7,7 +7,7 @@ import { RunnerFrame, useBrowserRunner } from '@/components/browser-runner';
 import type { BrowserRunResult } from '@/lib/browser-execution';
 import { SQL_DATASET, SQL_SCHEMA, SQL_STARTER, SQL_WORKSPACE } from '@/lib/sql-playground';
 
-const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr:false, loading:()=> <div className="flex h-[460px] items-center justify-center bg-[#09090f] text-sm text-slate-400">Loading SQL editor…</div> });
+const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr:false, loading:()=> <div className="flex h-[460px] items-center justify-center bg-[#0d1117] text-sm text-slate-400">Loading SQL editor…</div> });
 type SaveState='idle'|'saving'|'saved'|'error';
 
 export function SqlPlayground({ initialCode, signedIn }: { initialCode?: string; signedIn: boolean }) {

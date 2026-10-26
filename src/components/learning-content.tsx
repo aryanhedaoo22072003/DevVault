@@ -23,7 +23,7 @@ const keywordPattern = /\b(const|let|function|return|if|else|await|async|type|in
 const keywordSet = new Set(['const','let','function','return','if','else','await','async','type','interface','import','export','from','throw','new','true','false','null']);
 export function HighlightedCode({ code, language }: { code: string; language: string }) {
   const parts = code.split(keywordPattern);
-  return <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0910]"><div className="border-b border-white/10 px-4 py-2 text-xs uppercase tracking-wider text-violet-300">{language || 'text'}</div><pre className="overflow-x-auto p-4 text-sm leading-6 text-slate-200"><code>{parts.map((part, index) => keywordSet.has(part) ? <span key={index} className="text-violet-300">{part}</span> : part)}</code></pre></div>;
+  return <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117]"><div className="border-b border-white/10 px-4 py-2 text-xs uppercase tracking-wider text-slate-400">{language || 'text'}</div><pre className="overflow-x-auto p-4 text-sm leading-6 text-slate-200"><code>{parts.map((part, index) => keywordSet.has(part) ? <span key={index} className="text-sky-300">{part}</span> : part)}</code></pre></div>;
 }
 
 export function SafeFlowchart({ definition, title }: { definition: string; title?: string }) {

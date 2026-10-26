@@ -3,6 +3,12 @@ export const BROWSER_RUNNER_VERSION = 1 as const;
 export const MAX_BROWSER_SOURCE_BYTES = 30_000;
 export const MAX_BROWSER_OUTPUT_BYTES = 16_384;
 export const BROWSER_EXECUTION_TIMEOUT_MS = 10_000;
+export const BROWSER_PYTHON_EXECUTION_TIMEOUT_MS = 30_000;
+export const BROWSER_RUNNER_READY_TIMEOUT_MS = 8_000;
+
+export function browserExecutionTimeout(language: BrowserLanguage) {
+  return language === 'python' ? BROWSER_PYTHON_EXECUTION_TIMEOUT_MS : BROWSER_EXECUTION_TIMEOUT_MS;
+}
 
 export type BrowserLanguage = 'python' | 'javascript' | 'sql';
 export type PlaygroundLanguage = BrowserLanguage | 'typescript' | 'c' | 'cpp' | 'java';

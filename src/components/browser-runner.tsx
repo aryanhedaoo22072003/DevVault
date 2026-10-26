@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LoaderCircle, Play, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
-  BROWSER_EXECUTION_TIMEOUT_MS,
+  BROWSER_RUNNER_READY_TIMEOUT_MS,
   BROWSER_RUNNER_CHANNEL,
   BROWSER_RUNNER_VERSION,
   type BrowserLanguage,
@@ -12,6 +12,7 @@ import {
   type BrowserRunResult,
   type PublicTest,
   validRunnerResult,
+  browserExecutionTimeout,
 } from "@/lib/browser-execution";
 
 export function useBrowserRunner() {
@@ -23,11 +24,23 @@ export function useBrowserRunner() {
     timer: ReturnType<typeof setTimeout>;
   } | null>(null);
   const [ready, setReady] = useState(false);
+  const [readinessError, setReadinessError] = useState("");
+  const readinessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armReadinessTimer = useCallback(() => {
+    if (readinessTimer.current) clearTimeout(readinessTimer.current);
+    readinessTimer.current = setTimeout(() => {
+      setReadinessError(
+        "The isolated browser sandbox did not start. Check content blocking or your network, then retry.",
+      );
+    }, BROWSER_RUNNER_READY_TIMEOUT_MS);
+  }, []);
   const resetSandbox = useCallback(() => {
     setReady(false);
+    setReadinessError("");
+    armReadinessTimer();
     if (frame.current)
       frame.current.src = `/devvault-browser-runner.html?generation=${Date.now()}`;
-  }, []);
+  }, [armReadinessTimer]);
 
   useEffect(() => {
     const receive = (event: MessageEvent) => {
@@ -42,6 +55,9 @@ export function useBrowserRunner() {
         event.data.type === "ready" &&
         event.data.version === BROWSER_RUNNER_VERSION
       ) {
+        if (readinessTimer.current) clearTimeout(readinessTimer.current);
+        readinessTimer.current = null;
+        setReadinessError("");
         setReady(true);
         return;
       }
@@ -52,11 +68,13 @@ export function useBrowserRunner() {
       active.resolve(event.data);
     };
     window.addEventListener("message", receive);
+    armReadinessTimer();
     return () => {
       window.removeEventListener("message", receive);
       if (pending.current) clearTimeout(pending.current.timer);
+      if (readinessTimer.current) clearTimeout(readinessTimer.current);
     };
-  }, []);
+  }, [armReadinessTimer]);
 
   const stop = useCallback(() => {
     const active = pending.current;
@@ -91,7 +109,7 @@ export function useBrowserRunner() {
               "Local execution exceeded the 10 second limit. The sandbox was reset and your code was preserved.",
             ),
           );
-        }, BROWSER_EXECUTION_TIMEOUT_MS);
+        }, browserExecutionTimeout(input.language));
         pending.current = { id, resolve, reject, timer };
         frame.current.contentWindow.postMessage(
           {
@@ -125,6 +143,8 @@ export function useBrowserRunner() {
     run,
     stop,
     wake,
+    readinessError,
+    retry: resetSandbox,
     running: () => Boolean(pending.current),
   };
 }
@@ -279,9 +299,12 @@ export function LocalRunControls({
         </span>
       </div>
       {!runner.ready ? (
-        <p className="mt-3 text-sm text-slate-400">
-          Preparing the isolated browser sandbox…
-        </p>
+        runner.readinessError ? (
+          <div role="alert" className="mt-3 rounded-xl border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-100">
+            <p>{runner.readinessError}</p>
+            <button type="button" onClick={runner.retry} className="mt-2 rounded-lg border border-rose-200/20 px-3 py-1.5 font-semibold">Retry sandbox</button>
+          </div>
+        ) : <p className="mt-3 text-sm text-slate-400">Preparing the isolated browser sandbox…</p>
       ) : null}
       {error ? (
         <p

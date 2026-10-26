@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BROWSER_RUNNER_CHANNEL, BROWSER_RUNNER_VERSION, languageRegistry, validRunnerRequest, validRunnerResult } from './browser-execution';
+import { BROWSER_EXECUTION_TIMEOUT_MS, BROWSER_PYTHON_EXECUTION_TIMEOUT_MS, BROWSER_RUNNER_CHANNEL, BROWSER_RUNNER_VERSION, browserExecutionTimeout, languageRegistry, validRunnerRequest, validRunnerResult } from './browser-execution';
 
 describe('browser execution protocol', () => {
   const request = { channel: BROWSER_RUNNER_CHANNEL, version: BROWSER_RUNNER_VERSION, id: 'run-1', action: 'run' as const, language: 'python' as const, code: 'print(1)', tests: [] };
@@ -37,5 +37,11 @@ describe('browser execution protocol', () => {
     expect(runner).not.toContain("type: 'module'");
     expect(runner).toContain("importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js')");
     expect(runner).toContain('Worker startup error:');
+  });
+  it('keeps execution timeouts bounded while allowing Pyodide a finite cold start', () => {
+    expect(browserExecutionTimeout('javascript')).toBe(BROWSER_EXECUTION_TIMEOUT_MS);
+    expect(browserExecutionTimeout('sql')).toBe(BROWSER_EXECUTION_TIMEOUT_MS);
+    expect(browserExecutionTimeout('python')).toBe(BROWSER_PYTHON_EXECUTION_TIMEOUT_MS);
+    expect(BROWSER_PYTHON_EXECUTION_TIMEOUT_MS).toBeLessThanOrEqual(30_000);
   });
 });

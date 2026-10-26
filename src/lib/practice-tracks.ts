@@ -10,6 +10,16 @@ export const trackVisitSchema=z.object({trackSlug:z.string().trim().min(1).max(1
 export function orderedSections<T extends {order:number}>(sections:T[]){return [...sections].sort((a,b)=>a.order-b.order)}
 export function scoreTrackQuiz(questions:Array<{choices:string[];answerIndex:number;explanation:string}>,answers:number[],passingPercentage:number){if(!questions.length||answers.length!==questions.length)throw new Error('Answer every question before submitting.');answers.forEach((answer,index)=>{if(answer<0||answer>=questions[index].choices.length)throw new Error(`Invalid answer for question ${index+1}.`)});const feedback=questions.map((question,index)=>({correct:answers[index]===question.answerIndex,explanation:question.explanation}));const score=feedback.filter(item=>item.correct).length;const percentage=Math.round(score/questions.length*100);return{score,total:questions.length,percentage,passed:percentage>=passingPercentage,feedback}}
 export function trackProgress(completedQuizIds:Iterable<string>,quizIds:Iterable<string>){const complete=new Set(completedQuizIds);const quizzes=[...quizIds];const completed=quizzes.filter(id=>complete.has(id)).length;return{completed,total:quizzes.length,percentage:quizzes.length?Math.round(completed/quizzes.length*100):0}}
+export function isTrackSectionUnlocked(completedQuizIds:Iterable<string>,quizIds:Iterable<string>,sectionIndex:number){
+  if(sectionIndex<=0)return true;
+  const completed=new Set(completedQuizIds),ordered=[...quizIds];
+  return ordered.slice(0,sectionIndex).every(quizId=>completed.has(quizId));
+}
+export function firstUnfinishedSectionIndex(completedQuizIds:Iterable<string>,quizIds:Iterable<string>){
+  const completed=new Set(completedQuizIds),ordered=[...quizIds];
+  const index=ordered.findIndex(quizId=>!completed.has(quizId));
+  return index===-1?Math.max(0,ordered.length-1):index;
+}
 export function trackProgressOwner(clerkUserId:string,trackId:string){return{clerkUserId,trackId}}
 export function quizXpAwardFilter(clerkUserId:string,quizId:string){return{clerkUserId,'practiceQuizAwards.quizId':{$ne:quizId}}}
 export function additiveSectionMerge<T extends {slug:string;_id?:string}>(existing:T[],incoming:T[]){const bySlug=new Map(existing.map(item=>[item.slug,item]));return incoming.map(item=>({...item,...(bySlug.get(item.slug)?{_id:bySlug.get(item.slug)?._id}:{})}))}

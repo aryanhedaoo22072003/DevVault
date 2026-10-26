@@ -10,10 +10,15 @@ const nextConfig = {
       { key: 'X-Frame-Options', value: 'DENY' },
       ...(process.env.NODE_ENV === 'production' ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }] : []),
     ];
-    return [{ source: '/:path*', headers: sharedSecurityHeaders }, {
+    return [{
+      // The runner is intentionally embedded by this application in a
+      // sandboxed, opaque-origin iframe. Every other route remains unframeable.
+      source: '/((?!devvault-browser-runner\\.html$).*)',
+      headers: sharedSecurityHeaders,
+    }, {
       source: '/devvault-browser-runner.html',
       headers: [
-        { key: 'Content-Security-Policy', value: "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; connect-src https://cdn.jsdelivr.net; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" },
+        { key: 'Content-Security-Policy', value: "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; worker-src blob:; connect-src https://cdn.jsdelivr.net; img-src 'none'; style-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'self'" },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
         { key: 'Referrer-Policy', value: 'no-referrer' },
         { key: 'X-Content-Type-Options', value: 'nosniff' },

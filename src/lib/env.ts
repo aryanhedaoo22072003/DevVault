@@ -35,3 +35,10 @@ export function clerkAuthorizedParties(appUrl = env.appUrl) {
     return ['https://invalid.devvault.local'];
   }
 }
+
+export function protectedSignInUrl(requestUrl: string) {
+  const request = new URL(requestUrl);
+  const signIn = new URL('/sign-in', request.origin);
+  signIn.searchParams.set('redirect_url', request.href);
+  return signIn.toString();
+}

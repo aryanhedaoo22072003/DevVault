@@ -38,11 +38,14 @@ export function validateStorageProvider(value: string): StorageProvider {
   return value;
 }
 function storageRoot() {
-  const root = path.resolve(process.cwd(), env.privateStorageRoot); const publicRoot = path.resolve(process.cwd(), 'public');
+  // Local-private storage is a development adapter. These files must not be traced
+  // into a serverless bundle; production uses the configured s3-private adapter.
+  // Runtime containment checks below still validate every resolved local path.
+  const root = path.resolve(/* turbopackIgnore: true */ process.cwd(), env.privateStorageRoot); const publicRoot = path.resolve(process.cwd(), 'public');
   if (root === publicRoot || root.startsWith(`${publicRoot}${path.sep}`)) throw new Error('Private storage cannot be located under public/.'); return root;
 }
 function resolvePrivatePath(key: string) {
-  const root = storageRoot(); const target = path.resolve(root, validateStorageKey(key));
+  const root = storageRoot(); const target = path.resolve(/* turbopackIgnore: true */ root, validateStorageKey(key));
   if (!target.startsWith(`${root}${path.sep}`)) throw new Error('Invalid private storage path.'); return target;
 }
 export function validatePrivateUpload(file: Pick<File, 'name' | 'type' | 'size'>) {
